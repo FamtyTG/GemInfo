@@ -1,47 +1,65 @@
-<mxfile host="app.diagrams.net" agent="TravelHunter" version="24.7.8" type="device">
+<mxfile host="app.diagrams.net" agent="GameHunter" version="24.7.8" type="device">
   <diagram id="use-case" name="use-case">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="760" math="0" shadow="0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1020" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-<mxCell id="boundary" value="Telegram-бот TravelHunter" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=14;fillColor=none;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1"><mxGeometry x="200" y="40" width="480" height="640" as="geometry"/></mxCell>
-<mxCell id="actor" value="Пользователь" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;" vertex="1" parent="1"><mxGeometry x="60" y="320" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="uc1" value="1. Получить список праздников
-на ближайшие 7 дней" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="250" y="80" width="380" height="60" as="geometry"/></mxCell>
-<mxCell id="uc2" value="2. Указать текущий город" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="250" y="165" width="380" height="60" as="geometry"/></mxCell>
-<mxCell id="uc3" value="3. Получить список ближайших городов
-(радиус 500 км)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="250" y="250" width="380" height="60" as="geometry"/></mxCell>
-<mxCell id="uc4" value="4. Выбрать город для поездки
-(сохранение в базу данных)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="250" y="335" width="380" height="60" as="geometry"/></mxCell>
-<mxCell id="uc5" value="5. Просмотреть историю поездок" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="250" y="420" width="380" height="60" as="geometry"/></mxCell>
-<mxCell id="uc6" value="6. Просмотреть информацию о поездке" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="250" y="505" width="380" height="60" as="geometry"/></mxCell>
-<mxCell id="uc7" value="7. Добавить заметку о поездке
-(до 1000 символов)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="250" y="590" width="380" height="60" as="geometry"/></mxCell>
-<mxCell id="ninjas" value="Ninjas Holidays API
-(праздники)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1"><mxGeometry x="780" y="80" width="200" height="60" as="geometry"/></mxCell>
-<mxCell id="geonames" value="GeoNames API
-(города и координаты)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1"><mxGeometry x="780" y="250" width="200" height="60" as="geometry"/></mxCell>
-<mxCell id="wiki" value="Wikipedia API
-(описание и фото города)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1"><mxGeometry x="780" y="420" width="200" height="60" as="geometry"/></mxCell>
+<mxCell id="boundary" value="Telegram-бот GameHunter" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=14;fillColor=none;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1"><mxGeometry x="210" y="40" width="520" height="900" as="geometry"/></mxCell>
+<mxCell id="actor" value="Пользователь" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=12;" vertex="1" parent="1"><mxGeometry x="60" y="440" width="40" height="80" as="geometry"/></mxCell>
+<mxCell id="uc1" value="1. Выбрать интересы (жанры)
+для подбора игр" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="70" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc1"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc2" value="2. Получить подборку игр
+(с учётом анкеты и возраста)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="150" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc3" value="3. Открыть карточку игры
+(описание, рейтинг, возрастной рейтинг)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="230" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc3"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc4" value="4. Найти игры по франшизе (IP)
+Marvel, Star Wars, Warcraft" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="310" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc4"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc5" value="5. Заполнить анкету
+(возраст, интересы, платформы)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="390" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc5"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc6" value="6. Определить регион по IP
+(город, страна, часовой пояс, валюта)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="470" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc6"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc7" value="7. Отметить игру как сыгранную
+(исключается из подборок)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="550" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc7"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc8" value="8. Оставить отзыв об игре
+(до 1000 символов)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="630" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc8"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc9" value="9. Просмотреть «Во что я играл»
+(список с пагинацией)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="710" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc9"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc10" value="10. Добавить игру в избранное" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="790" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc10"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="uc11" value="11. Просмотреть избранное" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="260" y="870" width="420" height="64" as="geometry"/></mxCell>
+<mxCell id="a_uc11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc11"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="rawg" value="RAWG Video Games Database
+(жанры, платформы, игры,
+карточки, франшизы)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1"><mxGeometry x="800" y="70" width="220" height="80" as="geometry"/></mxCell>
+<mxCell id="geo" value="ipapi.co / ipwho.is
+(регион по IP-адресу)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1"><mxGeometry x="800" y="470" width="220" height="70" as="geometry"/></mxCell>
 <mxCell id="db" value="PostgreSQL
-visited_cities" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1"><mxGeometry x="780" y="580" width="200" height="80" as="geometry"/></mxCell>
-<mxCell id="a0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc1"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="a1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc2"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="a2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc3"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="a3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc4"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="a4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc5"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="a5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc6"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="a6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="actor" target="uc7"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="l0" value="GET /v2/holidays
-country=RU" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc1" target="ninjas"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="l1" value="searchJSON" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc2" target="geonames"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="l2" value="findNearbyPlaceNameJSON
-radius=500" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc3" target="geonames"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="l3" value="INSERT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc4" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="l4" value="prop=extracts|pageimages" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc4" target="wiki"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="l5" value="SELECT by tg_user_id" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc5" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="l6" value="SELECT by id" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc6" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="l7" value="UPDATE note" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc7" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+user_profiles · played_games
+favorite_games" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1"><mxGeometry x="800" y="760" width="220" height="90" as="geometry"/></mxCell>
+<mxCell id="e_uc1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc1" target="rawg"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc2" target="rawg"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc3" target="rawg"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc4" target="rawg"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc2" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc5" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc6" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc7" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc8" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc9" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc10" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc11" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_uc6_geo" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="uc6" target="geo"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="note" value="Telegram Bot API не передаёт IP-адрес пользователя:
+для определения региона пользователь сам присылает свой публичный IP (2ip.ru)." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=12;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="210" y="950" width="700" height="50" as="geometry"/></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
