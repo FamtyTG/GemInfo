@@ -1,22 +1,22 @@
 services:
-  # PostgreSQL для локальной разработки Telegram-бота TravelHunter.
+  # PostgreSQL для локальной разработки Telegram-бота GameHunter.
   # Запуск:  docker compose up -d
   # Остановка: docker compose down       (данные сохранятся в volume)
   postgres:
     image: postgres:16-alpine
-    container_name: travelhunter-db
+    container_name: gamehunter-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: travelhunter
+      POSTGRES_DB: gamehunter
       TZ: Europe/Moscow
     ports:
       - "5432:5432"
     volumes:
-      - travelhunter_pgdata:/var/lib/postgresql/data
+      - gamehunter_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d travelhunter"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gamehunter"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -24,7 +24,7 @@ services:
   # Админка для просмотра таблиц (необязательно): http://localhost:8080
   adminer:
     image: adminer:4
-    container_name: travelhunter-adminer
+    container_name: gamehunter-adminer
     restart: unless-stopped
     depends_on:
       postgres:
@@ -33,4 +33,4 @@ services:
       - "8080:8080"
 
 volumes:
-  travelhunter_pgdata:
+  gamehunter_pgdata:

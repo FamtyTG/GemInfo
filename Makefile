@@ -1,4 +1,4 @@
-# Короткие команды для работы с проектом TravelHunter
+# Короткие команды для работы с проектом GameHunter
 # Запуск: make <цель>   (список целей — make help)
 
 PYTHON ?= python3
@@ -11,7 +11,7 @@ help:
 	@echo "  make install      - установить основные зависимости"
 	@echo "  make install-dev  - установить зависимости для разработки (pytest)"
 	@echo "  make init-db      - создать таблицы базы данных"
-	@echo "  make demo         - создать таблицы и добавить демонстрационные поездки"
+	@echo "  make demo         - создать таблицы и добавить демонстрационные данные"
 	@echo "  make run          - запустить Telegram-бота"
 	@echo "  make test         - запустить тесты"
 	@echo "  make mockups      - перегенерировать SVG-мокапы экранов"
@@ -40,8 +40,8 @@ mockups:
 	$(PYTHON) -m scripts.generate_mockups
 
 lint:
-	$(PYTHON) -m compileall -q travelhunter tests scripts run.py
+	$(PYTHON) -m compileall -q gamehunter tests scripts run.py
 
 clean:
-	rm -rf .pytest_cache travelhunter.db
+	rm -rf .pytest_cache gamehunter.db
 	find . -type d -name "__pycache__" -not -path "./.venv/*" -exec rm -rf {} +
