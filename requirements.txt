@@ -1,0 +1,8 @@
+# Основные зависимости проекта TravelHunter
+# Установка: pip install -r requirements.txt
+
+pyTelegramBotAPI>=4.15,<5.0   # telebot — работа с Telegram Bot API
+requests>=2.31,<3.0           # HTTP-запросы к внешним API (Ninjas, GeoNames, Wikipedia)
+SQLAlchemy>=2.0,<3.0          # ORM для работы с базой данных
+psycopg2-binary>=2.9,<3.0     # драйвер PostgreSQL
+python-dotenv>=1.0,<2.0       # загрузка настроек из файла .env
