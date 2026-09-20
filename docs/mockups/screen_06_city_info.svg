@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="602" viewBox="0 0 400 602">
+  <rect width="400" height="602" fill="#e7ebf0"/>
+  <rect width="400" height="56" fill="#2a76c6"/>
+  <text x="14" y="26" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" fill="#ffffff">TravelHunter</text>
+  <text x="14" y="44" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#dce8f6">Экран 6. Города куда съездить — информация о городе</text>
+  <text x="266" y="34" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#dce8f6">@TravelHunterBot</text>
+  <rect x="14" y="70" width="372" height="170" rx="12" fill="#bcd6f2" stroke="#c9d3dd"/>
+<text x="109" y="155" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#3d5a78">[ изображение города из Википедии ]</text>
+  <rect x="14" y="256" width="372" height="236" rx="12" fill="#ffffff" stroke="#c9d3dd"/>
+<text x="24" y="279" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b" font-weight="600">Информация о городе:</text>
+<text x="24" y="297" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b"></text>
+<text x="24" y="315" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">Город: Тула</text>
+<text x="24" y="333" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">Расстояние от города Москва: 172 км</text>
+<text x="24" y="351" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">Регион: Тульская область</text>
+<text x="24" y="369" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">Страна: Россия</text>
+<text x="24" y="387" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b"></text>
+<text x="24" y="405" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">Поездка сохранена в Вашей истории.</text>
+<text x="24" y="423" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b"></text>
+<text x="24" y="441" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">Тула — город в России, административный центр Тульской области.</text>
+<text x="24" y="459" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">Город-герой, впервые упомянут в 1146 году. Известен пряниками,</text>
+<text x="24" y="477" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">самоварами и Тульским кремлём…</text>
+  <rect x="14" y="508" width="372" height="34" rx="8" fill="#d9ebff" stroke="#7aa9de"/>
+<text x="26" y="530" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#123f6d">В главное меню</text>
+  <text x="14" y="573" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#5c6b7a">Если изображения нет — информация показывается только текстом.</text>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="190" viewBox="0 0 400 190">
+  <rect width="400" height="190" fill="#e7ebf0"/>
+  <rect width="400" height="56" fill="#2a76c6"/>
+  <text x="14" y="26" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" fill="#ffffff">TravelHunter</text>
+  <text x="14" y="44" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#dce8f6">Экран 4. Города куда съездить — ввод города</text>
+  <text x="266" y="34" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#dce8f6">@TravelHunterBot</text>
+  <rect x="14" y="70" width="372" height="38" rx="12" fill="#ffffff" stroke="#c9d3dd"/>
+<text x="24" y="93" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b" font-weight="600">Введите название города, в котором Вы сейчас находитесь.</text>
+  <text x="14" y="143" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#5c6b7a">Если город не найден: «Город не найден. Проверьте название города</text>
+<text x="14" y="161" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#5c6b7a">и попробуйте ещё раз.» — бот ждёт повторного ввода.</text>
+</svg>

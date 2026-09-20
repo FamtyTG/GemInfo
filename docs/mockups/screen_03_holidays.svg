@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="326" viewBox="0 0 400 326">
+  <rect width="400" height="326" fill="#e7ebf0"/>
+  <rect width="400" height="56" fill="#2a76c6"/>
+  <text x="14" y="26" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" fill="#ffffff">TravelHunter</text>
+  <text x="14" y="44" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#dce8f6">Экран 3. Праздники на 7 дней</text>
+  <text x="266" y="34" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#dce8f6">@TravelHunterBot</text>
+  <rect x="14" y="70" width="372" height="128" rx="12" fill="#ffffff" stroke="#c9d3dd"/>
+<text x="24" y="93" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b" font-weight="600">Праздники на ближайшие 7 дней:</text>
+<text x="24" y="111" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b"></text>
+<text x="24" y="129" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">1. День физкультурника</text>
+<text x="24" y="147" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">   08.08.2026 · Sa · Observance</text>
+<text x="24" y="165" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">2. День государственного флага</text>
+<text x="24" y="183" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#16202b">   22.08.2026 · Sa · National holiday</text>
+  <rect x="14" y="214" width="372" height="34" rx="8" fill="#d9ebff" stroke="#7aa9de"/>
+<text x="26" y="236" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#123f6d">В главное меню</text>
+  <text x="14" y="279" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#5c6b7a">Если праздников нет: «К сожалению, ни одного праздника не найдено…»</text>
+<text x="14" y="297" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#5c6b7a">Если API недоступен: «Не удалось получить список праздников…»</text>
+</svg>

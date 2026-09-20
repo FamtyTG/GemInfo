@@ -1,0 +1,57 @@
+<mxfile host="app.diagrams.net" agent="TravelHunter" version="24.7.8" type="device">
+  <diagram id="architecture" name="architecture">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+<mxCell id="l1" value="СЛОЙ 1. PRESENTATION — travelhunter/presentation" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=13;fillColor=none;dashed=1;" vertex="1" parent="1"><mxGeometry x="60" y="40" width="900" height="200" as="geometry"/></mxCell>
+<mxCell id="h" value="handlers.py
+BotHandlers
+(события Telegram)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1"><mxGeometry x="90" y="90" width="190" height="70" as="geometry"/></mxCell>
+<mxCell id="sc" value="screens/*
+Экраны 1–9" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1"><mxGeometry x="310" y="90" width="160" height="70" as="geometry"/></mxCell>
+<mxCell id="kb" value="keyboards.py
+texts.py
+state.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1"><mxGeometry x="500" y="90" width="160" height="70" as="geometry"/></mxCell>
+<mxCell id="gw" value="gateway.py
+TelegramGateway" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1"><mxGeometry x="690" y="90" width="170" height="70" as="geometry"/></mxCell>
+<mxCell id="tg" value="Telegram Bot API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="690" y="180" width="170" height="40" as="geometry"/></mxCell>
+<mxCell id="l2" value="СЛОЙ 2. DOMAIN — travelhunter/domain" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=13;fillColor=none;dashed=1;" vertex="1" parent="1"><mxGeometry x="60" y="280" width="900" height="190" as="geometry"/></mxCell>
+<mxCell id="hs" value="HolidayService" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="90" y="330" width="190" height="60" as="geometry"/></mxCell>
+<mxCell id="cs" value="CityService" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="310" y="330" width="160" height="60" as="geometry"/></mxCell>
+<mxCell id="ts" value="TripService" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="500" y="330" width="160" height="60" as="geometry"/></mxCell>
+<mxCell id="if" value="interfaces.py — порты
+entities.py — сущности
+exceptions.py — ошибки" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="690" y="320" width="240" height="80" as="geometry"/></mxCell>
+<mxCell id="l3" value="СЛОЙ 3. INFRASTRUCTURE — travelhunter/infrastructure" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=13;fillColor=none;dashed=1;" vertex="1" parent="1"><mxGeometry x="60" y="510" width="900" height="210" as="geometry"/></mxCell>
+<mxCell id="hc" value="api/http_client.py
+JsonHttpClient" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="90" y="560" width="200" height="60" as="geometry"/></mxCell>
+<mxCell id="cl1" value="NinjasHolidaysClient" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="90" y="640" width="200" height="40" as="geometry"/></mxCell>
+<mxCell id="cl2" value="GeoNamesClient" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="310" y="640" width="180" height="40" as="geometry"/></mxCell>
+<mxCell id="cl3" value="WikipediaClient" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="510" y="640" width="180" height="40" as="geometry"/></mxCell>
+<mxCell id="repo" value="db/repositories.py
+SqlTripRepository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="710" y="560" width="220" height="60" as="geometry"/></mxCell>
+<mxCell id="orm" value="db/models.py + db/database.py
+SQLAlchemy (ORM, сессии)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="710" y="640" width="220" height="50" as="geometry"/></mxCell>
+<mxCell id="ar0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="h" target="sc"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="sc" target="kb"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="sc" target="gw"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="gw" target="tg"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="sc" target="hs"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="sc" target="cs"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="sc" target="ts"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="h" target="cs"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="hs" target="if"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="cs" target="if"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="ts" target="if"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar11" value="реализует HolidaysProvider" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="if" target="cl1"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar12" value="реализует CityProvider / CityInfoProvider" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="if" target="cl2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar13" value="реализует TripRepository" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="if" target="repo"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="cl1" target="hc"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="cl2" target="hc"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="cl3" target="hc"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="ar17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=0;" edge="1" parent="1" source="repo" target="orm"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
