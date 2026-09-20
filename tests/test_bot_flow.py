@@ -1,756 +1,645 @@
-"""Сквозные тесты сценариев использования бота (без сети и без Telegram).
+"""Сценарии использования бота (сквозные тесты).
 
-Проверяются переходы между экранами согласно «Карте перемещения пользователя»:
-
-    Экран 1 → Экран 2 → Экран 3                     (праздники)
-    Экран 2 → Экран 4 → Экран 5 → Экран 6           (города куда съездить)
-    Экран 2 → Экран 7 → Экран 8 → Экран 9 → Экран 8 (история поездок)
+Каждый тест проходит путь пользователя от команды /start до результата,
+используя настоящие экраны, обработчики и базу данных SQLite. Внешние сервисы
+(каталог игр и геолокация) заменены подставными объектами, поэтому тесты
+работают без сети.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 import pytest
 
-from travelhunter.domain.entities import CityInfo
-from travelhunter.domain.services import CityService, HolidayService, TripService
-from travelhunter.infrastructure.db import SqlTripRepository
-from travelhunter.presentation.handlers import BotHandlers
-from travelhunter.presentation.screens import build_screens
-from travelhunter.presentation.state import Screen, StateStorage
-from tests.fakes import (
-    FakeCityInfoProvider,
-    FakeCityProvider,
-    FakeGateway,
-    FakeHolidaysProvider,
-    make_callback,
-    make_city,
-    make_holiday,
-    make_message,
-    make_nearby_city,
+from gamehunter.domain.exceptions import (
+    DatabaseError,
+    GamesUnavailableError,
+    GenresUnavailableError,
+    RegionUnavailableError,
 )
+from gamehunter.presentation import texts
+from gamehunter.presentation.keyboards import ButtonText, CallbackAction
+from gamehunter.presentation.state import ContextScreen, UserContext
+from tests.fakes import buttons_of, make_callback, make_details, make_game, make_message
 
 CHAT_ID = 100
 USER_ID = 200
 
-TODAY = date.today()  # праздники в тестах считаются от реальной текущей даты
-
-
-@dataclass
-class Flow:
-    """Набор объектов для имитации диалога пользователя с ботом."""
-
-    handlers: BotHandlers
-    gateway: FakeGateway
-    storage: StateStorage
-    holidays: FakeHolidaysProvider
-    cities: FakeCityProvider
-    city_info: FakeCityInfoProvider
-    trip_service: TripService
-    repository: SqlTripRepository
-
-    # ----------------------------- действия ----------------------------- #
-    def command_start(self) -> str:
-        self.handlers.on_start(make_message("/start", CHAT_ID, USER_ID))
-        return self.gateway.last_text
-
-    def send_text(self, text: str) -> str:
-        self.handlers.on_text(make_message(text, CHAT_ID, USER_ID))
-        return self.gateway.last_text
-
-    def press(self, callback_data: str) -> str:
-        self.handlers.on_callback(make_callback(callback_data, CHAT_ID, USER_ID))
-        return self.gateway.last_text
-
-    def screen(self) -> Screen:
-        return self.storage.get(USER_ID).screen
-
-    # ----------------------------- проверки ----------------------------- #
-    @property
-    def last_buttons(self):
-        markup = self.gateway.last_markup
-        # у ReplyKeyboardRemove нет атрибута keyboard — кнопок нет
-        if markup is None or not hasattr(markup, "keyboard"):
-            return []
-        return [
-            (button.text if hasattr(button, "text") else button.get("text"))
-            for row in markup.keyboard
-            for button in row
-        ]
-
-    @property
-    def last_callback_data(self):
-        markup = self.gateway.last_markup
-        if markup is None or not hasattr(markup, "keyboard"):
-            return []
-        return [
-            getattr(button, "callback_data", None) or button.get("callback_data")
-            for row in markup.keyboard
-            for button in row
-        ]
-
 
 @pytest.fixture()
-def flow(database) -> Flow:
-    """Собирает бота на подставных провайдерах и тестовой базе данных."""
-    gateway = FakeGateway()
-    storage = StateStorage()
-
-    holidays_provider = FakeHolidaysProvider(
-        holidays=[
-            make_holiday("День физкультурника", TODAY + timedelta(days=2)),
-            make_holiday("День государственного флага", TODAY + timedelta(days=5), "Observance"),
-            make_holiday("Прошедший праздник", TODAY - timedelta(days=10)),
-            make_holiday("Далёкий праздник", TODAY + timedelta(days=40)),
-        ]
-    )
-    city_provider = FakeCityProvider(
-        city=make_city("Москва", 55.7558, 37.6173, country="Россия"),
-        nearby=[
-            make_nearby_city("Москва", 0.0),
-            make_nearby_city("Тула", 172.4, region="Тульская область"),
-            make_nearby_city("Калуга", 249.6, region="Калужская область"),
-            make_nearby_city("Владимир", 310.2),
-            make_nearby_city("Рязань", 340.8),
-            make_nearby_city("Тверь", 410.5),
-            make_nearby_city("Орёл", 480.9),
-        ],
-    )
-    city_info_provider = FakeCityInfoProvider(
-        info=CityInfo(
-            title="Тула",
-            summary="Тула — город в России, административный центр Тульской области.",
-            image_url="https://upload.wikimedia.org/wikipedia/commons/tula.jpg",
-        )
-    )
-
-    repository = SqlTripRepository(database)
-    holiday_service = HolidayService(provider=holidays_provider)
-    city_service = CityService(city_provider=city_provider, city_info_provider=city_info_provider)
-    trip_service = TripService(repository=repository)
-
-    screens = build_screens(
-        gateway=gateway,
-        storage=storage,
-        holiday_service=holiday_service,
-        city_service=city_service,
-        trip_service=trip_service,
-    )
-    handlers = BotHandlers(
-        bot=None,  # в тестах регистрация не используется
-        gateway=gateway,
-        storage=storage,
-        screens=screens,
-        city_service=city_service,
-    )
-    return Flow(
-        handlers=handlers,
-        gateway=gateway,
-        storage=storage,
-        holidays=holidays_provider,
-        cities=city_provider,
-        city_info=city_info_provider,
-        trip_service=trip_service,
-        repository=repository,
-    )
-
-
-# ====================================================================== #
-# Экран 1 → Экран 2. Старт и главное меню
-# ====================================================================== #
-def test_first_start_shows_welcome_screen(flow: Flow):
-    text = flow.command_start()
-
-    assert "Добро пожаловать в TravelHunter" in text
-    assert "/start" in text
-    assert flow.last_buttons == ["Старт"]
-
-
-def test_second_start_shows_main_menu(flow: Flow):
-    flow.command_start()
-
-    text = flow.command_start()
-
-    assert text == (
-        "Добро пожаловать в TravelHunter\nВыберите кнопку из главного меню."
-    )
-    assert flow.last_buttons == [
-        "Праздники на 7 дней",
-        "Города куда съездить",
-        "История поездок",
-    ]
-    assert flow.screen() == Screen.MAIN_MENU
-
-
-def test_start_button_leads_to_main_menu(flow: Flow):
-    flow.command_start()
+def flow(handlers, gateway):
+    """Пользователь открыл бота и дошёл до главного меню."""
 
-    text = flow.send_text("Старт")
+    def step(callback: str | None = None, text: str | None = None) -> str:
+        """Один шаг диалога: нажатие кнопки или отправка текста."""
+        gateway.clear()
+        if callback is not None:
+            handlers.on_callback(make_callback(callback, chat_id=CHAT_ID, user_id=USER_ID))
+        else:
+            handlers.on_text(make_message(text or "", chat_id=CHAT_ID, user_id=USER_ID))
+        return gateway.last_text
 
-    assert "Выберите кнопку из главного меню" in text
+    handlers.on_start(make_message("/start", chat_id=CHAT_ID, user_id=USER_ID))
+    step(text=ButtonText.START)
+    return step
 
 
-def test_first_text_message_shows_welcome_screen(flow: Flow):
-    text = flow.send_text("Привет")
+# ---------------------------------------------------------------------- #
+# Сценарий 1. Подбор игры по интересам
+# ---------------------------------------------------------------------- #
+class TestScenarioPicking:
+    def test_full_path(self, flow, gateway, storage, library_service):
+        # Экран 2 → Экран 3: выбор интересов
+        message = flow(text=ButtonText.PICK)
+        assert texts.GENRES_TITLE in message
 
-    assert "Чат-бот, который помогает подобрать лучшее путешествие" in text
+        # Отмечаем два жанра
+        message = flow(callback="g:action")
+        assert "✔ Action" in message
 
+        message = flow(callback="g:role-playing-games-rpg")
+        assert "✔ RPG" in message
 
-def test_start_returns_to_main_menu_from_city_input(flow: Flow):
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    assert flow.screen() == Screen.WAITING_CITY_NAME
+        # Экран 4: подборка игр
+        message = flow(callback=CallbackAction.PICK_SHOW)
+        assert texts.GAMES_TITLE in message
+        assert "жанры: Action, RPG" in message
+        assert storage.get(USER_ID).screen == ContextScreen.GAME_LIST
 
-    flow.command_start()
+        # Экран 5: карточка первой игры
+        first_game = storage.get(USER_ID).games[0]
+        message = flow(callback=f"game:{first_game.id}")
+        assert texts.GAME_CARD_TITLE in message
+        assert first_game.name in message
 
-    assert flow.screen() == Screen.MAIN_MENU
-    assert "Выберите кнопку из главного меню" in flow.gateway.last_text
+        # Отмечаем игру как сыгранную
+        message = flow(callback=f"played:{first_game.id}")
+        assert texts.GAME_ADDED_TO_PLAYED in message
+        assert library_service.is_played(USER_ID, first_game.id) is True
 
+        # Экран 10: список сыгранных игр
+        message = flow(text=ButtonText.PLAYED)
+        assert first_game.name in message
 
-# ====================================================================== #
-# Экран 3. Праздники на 7 дней
-# ====================================================================== #
-def test_holidays_shows_only_next_seven_days(flow: Flow):
-    flow.command_start()
+        record_id = storage.get(USER_ID).records[0]
 
-    text = flow.send_text("Праздники на 7 дней")
+        # Экран 11: информация об игре
+        message = flow(callback=f"rec:{record_id}")
+        assert texts.PLAYED_INFO_TITLE in message
+        assert texts.REVIEW_ABSENT in message
 
-    assert "1. День физкультурника" in text
-    assert "2. День государственного флага" in text
-    assert "Прошедший праздник" not in text
-    assert "Далёкий праздник" not in text
-    assert flow.last_buttons == ["В главное меню"]
+        # Экран 11а: отзыв
+        message = flow(callback=f"rev:{record_id}")
+        assert texts.REVIEW_PROMPT in message
 
+        message = flow(text="Прошёл на 100%, отличный сюжет.")
+        assert texts.REVIEW_SAVED in message
+        assert "Отзыв: Прошёл на 100%, отличный сюжет." in message
 
-def test_holidays_available_via_inline_button(flow: Flow):
-    flow.command_start()
+    def test_show_all_without_genres(self, flow, gateway, games_provider):
+        flow(text=ButtonText.PICK)
+        message = flow(callback=CallbackAction.PICK_ALL)
 
-    text = flow.press("holidays")
-
-    assert "Праздники на ближайшие 7 дней" in text
-    assert flow.holidays.calls[0]["country"] == "RU"
-
-
-def test_holidays_shows_date_and_type(flow: Flow):
-    flow.command_start()
-
-    text = flow.press("holidays")
-
-    expected_date = (TODAY + timedelta(days=5)).strftime("%d.%m.%Y")
-    assert expected_date in text
-    assert "Observance" in text
-
-
-def test_holidays_when_none_found(flow: Flow):
-    flow.holidays.holidays = []
-    flow.command_start()
-
-    text = flow.press("holidays")
-
-    assert text == (
-        "К сожалению, ни одного праздника не найдено. "
-        "Рекомендуем придумать себе праздник самостоятельно."
-    )
-    assert flow.last_buttons == ["В главное меню"]
-
-
-def test_holidays_when_api_unavailable(flow: Flow):
-    flow.holidays.error = RuntimeError("connection refused")
-    flow.command_start()
-
-    text = flow.press("holidays")
-
-    assert text == (
-        "Не удалось получить список праздников. Попробуйте ещё раз позже."
-    )
-    assert flow.last_buttons == ["В главное меню"]
-
-
-def test_holidays_back_to_main_menu(flow: Flow):
-    flow.command_start()
-    flow.press("holidays")
-
-    text = flow.press("menu")
-
-    assert "Выберите кнопку из главного меню" in text
-    assert flow.screen() == Screen.MAIN_MENU
-
-
-# ====================================================================== #
-# Экраны 4 → 5 → 6. Города куда съездить
-# ====================================================================== #
-def test_city_input_prompt(flow: Flow):
-    flow.command_start()
-
-    text = flow.send_text("Города куда съездить")
-
-    assert text == "Введите название города, в котором Вы сейчас находитесь."
-    assert flow.screen() == Screen.WAITING_CITY_NAME
-
-
-def test_nearby_cities_list(flow: Flow):
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-
-    text = flow.send_text("Москва")
-
-    assert "Текущий город: Москва" in text
-    assert "Радиус поиска: 500 км" in text
-    assert "1. Тула — 172 км" in text
-    assert "2. Калуга — 250 км" in text
-    # город пользователя исключён из списка, показаны только первые 5
-    assert "Москва —" not in text
-    assert "Орёл" not in text
-    assert flow.last_buttons == [
-        "Выбрать город 1",
-        "Выбрать город 2",
-        "Выбрать город 3",
-        "Выбрать город 4",
-        "Выбрать город 5",
-        "Назад",
-    ]
-    assert flow.screen() == Screen.NEARBY_CITIES
-
-
-def test_nearby_cities_requested_with_city_coordinates(flow: Flow):
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.send_text("Москва")
-
-    call = flow.cities.nearby_calls[0]
-
-    assert call["lat"] == 55.7558
-    assert call["lng"] == 37.6173
-    assert call["radius"] == 500
-
-
-def test_city_not_found_asks_again(flow: Flow):
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.cities.city = None  # сервис не нашёл город
-
-    text = flow.send_text("Атлантида")
-
-    assert text.endswith("Введите название города, в котором Вы сейчас находитесь.")
-    assert "Город не найден. Проверьте название города и попробуйте ещё раз." in text
-    assert flow.screen() == Screen.WAITING_CITY_NAME
-
-    # повторный ввод корректного города работает
-    flow.cities.city = make_city("Москва", 55.7558, 37.6173)
-    text = flow.send_text("Москва")
-
-    assert "1. Тула — 172 км" in text
-
-
-def test_city_search_service_error(flow: Flow):
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.cities.search_error = RuntimeError("geonames down")
-
-    text = flow.send_text("Москва")
-
-    assert "Не удалось найти город. Попробуйте ещё раз позже." in text
-    assert flow.last_buttons == ["В главное меню"]
-    assert flow.screen() == Screen.MAIN_MENU
-
-
-def test_select_city_saves_trip_and_shows_info(flow: Flow):
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.send_text("Москва")
-
-    text = flow.press("city:1")
-
-    # поездка сохранена в базе данных
-    assert flow.repository.count_by_user(USER_ID) == 1
-    saved_trip = flow.repository.find_by_user(USER_ID, 10, 0)[0]
-    assert saved_trip.name == "Тула"
-    assert saved_trip.note is None
-
-    # показана информация о городе из Википедии
-    assert flow.gateway.photos, "ожидалось сообщение с фотографией города"
-    assert "Город: Тула" in text
-    assert "Расстояние от города Москва: 172 км" in text
-    assert "Тула — город в России" in text
-    assert flow.last_buttons == ["В главное меню"]
-    assert flow.screen() == Screen.CITY_INFO
-
-
-def test_select_city_without_image_sends_text(flow: Flow):
-    flow.city_info.info = CityInfo(title="Тула", summary="Описание города.", image_url=None)
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.send_text("Москва")
-
-    text = flow.press("city:1")
-
-    assert flow.gateway.photos == []
-    assert "Город: Тула" in text
-    assert "Описание города." in text
-
-
-def test_select_city_when_photo_sending_fails(flow: Flow):
-    flow.gateway.photo_fails = True
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.send_text("Москва")
-
-    text = flow.press("city:1")
-
-    assert "Город: Тула" in text  # информация показана текстом
-
-
-def test_select_city_when_wikipedia_unavailable(flow: Flow):
-    flow.city_info.error = RuntimeError("wikipedia down")
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.send_text("Москва")
-
-    text = flow.press("city:1")
-
-    assert "Не удалось получить информацию о городе" in text
-    # поездка при этом сохранена
-    assert flow.repository.count_by_user(USER_ID) == 1
-    assert flow.last_buttons == ["В главное меню"]
-
-
-def test_select_city_out_of_range(flow: Flow):
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.send_text("Москва")
-
-    text = flow.press("city:9")
-
-    assert "Данные предыдущего шага не сохранились" in text
-    assert flow.repository.count_by_user(USER_ID) == 0
-
-
-def test_nearby_screen_without_city_returns_to_input(flow: Flow):
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-
-    # имитируем потерю данных: состояние сброшено, но пользователь жмёт «Назад»
-    flow.press("city_input")
-
-    assert flow.screen() == Screen.WAITING_CITY_NAME
-    assert "Введите название города" in flow.gateway.last_text
-
-
-def test_nearby_cities_not_found(flow: Flow):
-    flow.cities.nearby = [make_nearby_city("Москва", 0.0)]
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-
-    text = flow.send_text("Москва")
-
-    assert "не найдено других городов" in text
-    assert flow.last_buttons == ["В главное меню"]
-
-
-# ====================================================================== #
-# Экраны 7 → 8 → 9. История поездок
-# ====================================================================== #
-def add_trips(flow: Flow, count: int, user_id: int = USER_ID) -> None:
-    for index in range(count):
-        flow.trip_service.create_trip(
-            user_id, f"Город {index}", arrival_date=datetime(2026, 8, index + 1, 12)
+        assert texts.GAMES_TITLE in message
+        assert games_provider.search_calls[-1].genres == ()
+
+    def test_no_selection_and_no_profile_interests(self, flow):
+        flow(text=ButtonText.PICK)
+
+        message = flow(callback=CallbackAction.PICK_SHOW)
+
+        assert texts.GENRES_NO_SELECTION in message
+
+    def test_no_games_found(self, flow, games_provider):
+        games_provider.games = []
+        flow(text=ButtonText.PICK)
+        flow(callback="g:action")
+
+        message = flow(callback=CallbackAction.PICK_SHOW)
+
+        assert "не найдено" in message.lower() or "Не удалось найти" in message
+
+    def test_back_to_genres_from_list(self, flow, storage):
+        flow(text=ButtonText.PICK)
+        flow(callback=CallbackAction.PICK_ALL)
+
+        message = flow(callback=CallbackAction.PICK_GENRES)
+
+        assert texts.GENRES_TITLE in message
+        assert storage.get(USER_ID).screen == ContextScreen.PICKING_GENRES
+
+    def test_back_from_card_to_list(self, flow, storage, games_provider):
+        flow(text=ButtonText.PICK)
+        flow(callback=CallbackAction.PICK_ALL)
+        game = storage.get(USER_ID).games[0]
+        flow(callback=f"game:{game.id}")
+        searches = len(games_provider.search_calls)
+
+        message = flow(callback=CallbackAction.BACK_GAMES)
+
+        assert texts.GAMES_TITLE in message
+        assert len(games_provider.search_calls) == searches
+
+    def test_pagination(self, flow, storage):
+        flow(text=ButtonText.PICK)
+        flow(callback=CallbackAction.PICK_ALL)
+        first_page = [game.id for game in storage.get(USER_ID).games]
+
+        flow(callback="games:2")
+        second_page = [game.id for game in storage.get(USER_ID).games]
+
+        assert first_page != second_page
+        assert storage.get(USER_ID).games_page == 2
+
+        message = flow(callback="games:1")
+        assert "Страница 1 из 3" in message
+
+    def test_start_returns_to_menu_from_anywhere(self, flow, handlers, gateway, storage):
+        flow(text=ButtonText.PICK)
+        flow(callback="g:action")
+        gateway.clear()
+
+        handlers.on_start(make_message("/start", chat_id=CHAT_ID, user_id=USER_ID))
+
+        assert texts.MAIN_MENU_WELCOME in gateway.last_text
+        assert storage.get(USER_ID).screen == ContextScreen.MAIN_MENU
+
+
+# ---------------------------------------------------------------------- #
+# Сценарий 2. Поиск игр по франшизе (IP)
+# ---------------------------------------------------------------------- #
+class TestScenarioFranchise:
+    def test_full_path(self, flow, gateway, storage, library_service):
+        # Экран 6: ввод названия франшизы
+        message = flow(text=ButtonText.FRANCHISE)
+        assert texts.FRANCHISE_INPUT_PROMPT in message
+
+        # Экран 7: найденные франшизы
+        message = flow(text="Marvel")
+        assert texts.FRANCHISES_TITLE in message
+        assert "1. Marvel" in message
+        assert storage.get(USER_ID).screen == ContextScreen.FRANCHISE_LIST
+
+        # Экран 8: игры франшизы
+        message = flow(callback="frs:1")
+        assert "Игры франшизы Marvel:" in message
+        assert "Marvel's Spider-Man" in message
+
+        # Экран 5: карточка игры и добавление в избранное
+        message = flow(callback="game:9001")
+        assert texts.GAME_CARD_TITLE in message
+
+        message = flow(callback="fav:9001")
+        assert texts.GAME_ADDED_TO_FAVORITES in message
+        assert library_service.is_favorite(USER_ID, 9001) is True
+
+        # Экран 12: избранное
+        message = flow(text=ButtonText.FAVORITES)
+        assert texts.FAVORITES_TITLE in message
+        assert "Marvel's Spider-Man" in message
+
+        # Карточка из избранного и удаление из избранного
+        message = flow(callback="game:9001")
+        assert texts.GAME_STATUS_FAVORITE in message
+        assert ButtonText.REMOVE_FAVORITE in "\n".join(
+            label for row in buttons_of(gateway.last_markup) for label in row
         )
 
+        message = flow(callback="fav:9001")
+        assert texts.GAME_REMOVED_FROM_FAVORITES in message
+        assert library_service.is_favorite(USER_ID, 9001) is False
+
+    def test_second_franchise_from_list(self, flow, storage):
+        flow(text=ButtonText.FRANCHISE)
+        flow(text="Marvel")
+
+        message = flow(callback="frs:2")
+
+        assert "Игры франшизы Marvel Ultimate Alliance:" in message
+
+    def test_franchise_not_found(self, flow):
+        flow(text=ButtonText.FRANCHISE)
+
+        message = flow(text="абракадабра")
+
+        assert "не найдена" in message.lower()
+        assert texts.FRANCHISE_INPUT_PROMPT in message
+
+    def test_empty_franchise_name(self, flow):
+        flow(text=ButtonText.FRANCHISE)
+
+        message = flow(text="   ")
+
+        assert texts.FRANCHISE_EMPTY_NAME in message
+
+    def test_another_franchise_button(self, flow, storage):
+        flow(text=ButtonText.FRANCHISE)
+        flow(text="Marvel")
+        flow(callback="frs:1")
+
+        message = flow(callback=CallbackAction.FRANCHISE_INPUT)
+
+        assert texts.FRANCHISE_INPUT_PROMPT in message
+        assert storage.get(USER_ID).screen == ContextScreen.FRANCHISE_INPUT
 
-def test_history_empty(flow: Flow):
-    flow.command_start()
+    def test_back_from_card_to_franchise_games(self, flow, storage):
+        flow(text=ButtonText.FRANCHISE)
+        flow(text="Marvel")
+        flow(callback="frs:1")
+        flow(callback="game:9001")
 
-    text = flow.send_text("История поездок")
+        message = flow(callback=CallbackAction.BACK_GAMES)
 
-    assert text == (
-        "История поездок пока пуста. Выберите город для своей первой поездки."
-    )
-    assert flow.last_buttons == ["В главное меню"]
+        assert "Игры франшизы Marvel:" in message
+        assert storage.get(USER_ID).screen == ContextScreen.FRANCHISE_GAMES
 
 
-def test_history_lists_trips_from_new_to_old(flow: Flow):
-    add_trips(flow, 3)
-    flow.command_start()
+# ---------------------------------------------------------------------- #
+# Сценарий 3. Анкета пользователя
+# ---------------------------------------------------------------------- #
+class TestScenarioProfile:
+    def test_full_profile(self, flow, gateway, profile_service, ip_provider):
+        # Экран 9: пустая анкета
+        message = flow(text=ButtonText.PROFILE)
+        assert "Возраст: не указан" in message
+        assert "Регион: не определён" in message
 
-    text = flow.send_text("История поездок")
+        # Возраст
+        flow(callback=CallbackAction.PROFILE_AGE)
+        message = flow(text="27")
+        assert texts.PROFILE_AGE_SAVED in message
+        assert "Возраст: 27 лет" in message
 
-    assert "1. 03.08.2026 — Город 2" in text
-    assert "2. 02.08.2026 — Город 1" in text
-    assert "3. 01.08.2026 — Город 0" in text
-    assert flow.screen() == Screen.HISTORY
+        # Интересы
+        flow(callback=CallbackAction.PROFILE_GENRES)
+        flow(callback="pg:action")
+        flow(callback="pg:role-playing-games-rpg")
+        message = flow(callback=CallbackAction.PROFILE_GENRES_DONE)
+        assert texts.PROFILE_GENRES_SAVED in message
+        assert "Интересы (жанры): Action, RPG" in message
 
+        # Платформы
+        flow(callback=CallbackAction.PROFILE_PLATFORMS)
+        flow(callback="pl:1")
+        message = flow(callback=CallbackAction.PROFILE_PLATFORMS_DONE)
+        assert texts.PROFILE_PLATFORMS_SAVED in message
+        assert "Платформы: PC" in message
 
-def test_history_pagination(flow: Flow):
-    add_trips(flow, 7)
-    flow.command_start()
-    flow.send_text("История поездок")
+        # Регион по IP
+        flow(callback=CallbackAction.PROFILE_IP)
+        message = flow(text="8.8.8.8")
+        assert texts.PROFILE_REGION_SAVED in message
+        assert "Mountain View" in message
+        assert "часовой пояс: America/Los_Angeles" in message
+        assert "валюта: USD" in message
+        assert ip_provider.calls == ["8.8.8.8"]
 
-    assert "Страница 1 из 2" in flow.gateway.last_text
-    assert "5. 03.08.2026 — Город 2" in flow.gateway.last_text
-    assert "Вперёд" in flow.last_buttons
-    assert "Назад" not in flow.last_buttons
-    assert "history:2" in flow.last_callback_data
+        assert profile_service.get_profile(USER_ID).age == 27
 
-    text = flow.press("history:2")
+    def test_profile_is_used_in_picking(self, flow, gateway, games_provider):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_AGE)
+        flow(text="30")
+        flow(callback=CallbackAction.PROFILE_GENRES)
+        flow(callback="pg:shooter")
+        flow(callback=CallbackAction.PROFILE_GENRES_DONE)
+        flow(callback=CallbackAction.PROFILE_PLATFORMS)
+        flow(callback="pl:1")
+        flow(callback=CallbackAction.PROFILE_PLATFORMS_DONE)
 
-    assert "Страница 2 из 2" in text
-    assert "1. 02.08.2026 — Город 1" in text
-    assert "2. 01.08.2026 — Город 0" in text
-    assert "Назад" in flow.last_buttons
-    assert "Вперёд" not in flow.last_buttons
+        flow(text=ButtonText.PICK)
+        flow(callback=CallbackAction.PICK_SHOW)
 
+        query = games_provider.search_calls[-1]
+        assert query.genres == ("shooter",)
+        assert query.parent_platforms == (1,)
+        assert texts.GAMES_TITLE in gateway.last_text
 
-def test_history_shows_only_own_trips(flow: Flow):
-    add_trips(flow, 2)
-    add_trips(flow, 3, user_id=999)
-    flow.command_start()
+    def test_invalid_age(self, flow):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_AGE)
 
-    flow.send_text("История поездок")
+        message = flow(text="много")
 
-    assert "Город 0" in flow.gateway.last_text
-    assert "Страница" not in flow.gateway.last_text
+        assert "Возраст должен быть числом" in message
+        assert texts.PROFILE_AGE_PROMPT in message
 
+    def test_age_below_minimum(self, flow):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_AGE)
 
-def test_trip_info_without_note(flow: Flow):
-    add_trips(flow, 1)
-    trip_id = flow.repository.find_by_user(USER_ID, 1, 0)[0].id
-    flow.command_start()
-    flow.send_text("История поездок")
+        message = flow(text="2")
 
-    text = flow.press(f"trip:{trip_id}")
+        assert "Возраст должен быть числом" in message
 
-    assert "Дата поездки: 01.08.2026" in text
-    assert "Город: Город 0" in text
-    assert "Заметка о поездке отсутствует." in text
-    assert flow.last_buttons == ["Написать заметку", "Назад", "В главное меню"]
-    assert flow.screen() == Screen.TRIP_INFO
+    def test_reset_age(self, flow, profile_service):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_AGE)
+        flow(text="27")
 
+        message = flow(callback=CallbackAction.PROFILE_AGE_RESET)
 
-def test_trip_info_back_to_history(flow: Flow):
-    add_trips(flow, 7)
-    trip_id = flow.repository.find_by_user(USER_ID, 1, 0)[0].id
-    flow.command_start()
-    flow.send_text("История поездок")
-    flow.press("history:2")
-    flow.press(f"trip:{trip_id}")
+        assert texts.PROFILE_AGE_RESET in message
+        assert profile_service.get_profile(USER_ID).age is None
 
-    text = flow.press("history:2")
+    def test_invalid_ip(self, flow):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_IP)
 
-    assert "Страница 2 из 2" in text
-    assert flow.screen() == Screen.HISTORY
+        message = flow(text="это не адрес")
 
+        assert "Некорректный IP-адрес" in message
+        assert "2ip.ru" in message
 
-def test_trip_not_found(flow: Flow):
-    flow.command_start()
+    def test_private_ip(self, flow):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_IP)
 
-    text = flow.press("trip:4242")
+        message = flow(text="192.168.1.10")
 
-    assert "Поездка не найдена" in text
-    assert flow.last_buttons == ["В главное меню"]
+        assert "локальный" in message.lower()
+        assert "публичный" in message
 
+    def test_ip_from_text_with_explanation(self, flow, ip_provider):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_IP)
 
-def test_note_prompt(flow: Flow):
-    add_trips(flow, 1)
-    trip_id = flow.repository.find_by_user(USER_ID, 1, 0)[0].id
-    flow.command_start()
-    flow.send_text("История поездок")
-    flow.press(f"trip:{trip_id}")
+        flow(text="Мой адрес 5.188.0.1, посмотрел на 2ip.ru")
 
-    text = flow.press(f"note:{trip_id}")
+        assert ip_provider.calls == ["5.188.0.1"]
 
-    assert text == "Введите текст вашей заметки."
-    assert flow.screen() == Screen.WAITING_NOTE
+    def test_reset_region(self, flow, profile_service):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_IP)
+        flow(text="8.8.8.8")
 
+        message = flow(callback=CallbackAction.PROFILE_IP_RESET)
 
-def test_note_saved_and_return_to_trip_info(flow: Flow):
-    add_trips(flow, 1)
-    trip_id = flow.repository.find_by_user(USER_ID, 1, 0)[0].id
-    flow.command_start()
-    flow.send_text("История поездок")
-    flow.press(f"trip:{trip_id}")
-    flow.press(f"note:{trip_id}")
+        assert texts.PROFILE_REGION_RESET in message
+        assert profile_service.get_profile(USER_ID).region is None
 
-    saved_message = flow.send_text("Были в Туле, гуляли по набережной.")
+    def test_saved_interests_are_marked_on_reopen(self, flow, profile_service):
+        from tests.fakes import make_genre
 
-    assert saved_message != "Заметка успешно сохранена."  # после сохранения показан Экран 8
-    assert "Заметка успешно сохранена." in flow.gateway.all_texts
-    assert "Заметка: Были в Туле, гуляли по набережной." in flow.gateway.last_text
-    assert flow.repository.find_by_id(trip_id, USER_ID).note == "Были в Туле, гуляли по набережной."
-    assert flow.screen() == Screen.TRIP_INFO
+        profile_service.set_genres(USER_ID, [make_genre("Strategy", "strategy", 7)])
+        flow(text=ButtonText.PROFILE)
 
+        message = flow(callback=CallbackAction.PROFILE_GENRES)
 
-def test_note_too_long_stays_on_note_screen(flow: Flow):
-    add_trips(flow, 1)
-    trip_id = flow.repository.find_by_user(USER_ID, 1, 0)[0].id
-    flow.command_start()
-    flow.send_text("История поездок")
-    flow.press(f"note:{trip_id}")
+        assert "✔ Strategy" in message
 
-    text = flow.send_text("с" * 1001)
 
-    assert text == (
-        "Заметка не должна превышать 1000 символов. "
-        "Сократите текст и попробуйте ещё раз."
-    )
-    assert flow.screen() == Screen.WAITING_NOTE
-    assert flow.repository.find_by_id(trip_id, USER_ID).note is None
+# ---------------------------------------------------------------------- #
+# Сценарий 4. Учёт сыгранных игр и возраста
+# ---------------------------------------------------------------------- #
+class TestScenarioPlayedAndAge:
+    def test_played_games_are_excluded(self, flow, gateway, library_service, games_provider):
+        library_service.add_played(USER_ID, make_game(32, "The Witcher 3: Wild Hunt"))
+        library_service.add_played(USER_ID, make_game(58175, "God of War"))
 
-    # после ошибки можно ввести корректную заметку
-    flow.send_text("Короткая заметка")
+        flow(text=ButtonText.PICK)
+        flow(callback=CallbackAction.PICK_ALL)
 
-    assert flow.repository.find_by_id(trip_id, USER_ID).note == "Короткая заметка"
+        message = gateway.last_text
+        assert texts.GAMES_PLAYED_EXCLUDED in message
+        assert "The Witcher 3" not in message
+        assert "God of War" not in message
+        assert set(games_provider.search_calls[-1].exclude_game_ids) == {32, 58175}
 
+    def test_marked_game_is_excluded_on_next_search(self, flow, gateway, storage, library_service):
+        flow(text=ButtonText.PICK)
+        flow(callback=CallbackAction.PICK_ALL)
+        game_id = storage.get(USER_ID).games[0].id
 
-def test_empty_note_is_rejected(flow: Flow):
-    add_trips(flow, 1)
-    trip_id = flow.repository.find_by_user(USER_ID, 1, 0)[0].id
-    flow.command_start()
-    flow.press(f"note:{trip_id}")
+        flow(callback=f"game:{game_id}")
+        flow(callback=f"played:{game_id}")
+        assert library_service.is_played(USER_ID, game_id) is True
 
-    text = flow.send_text("   ")
+        flow(text=ButtonText.PICK)
+        flow(callback=CallbackAction.PICK_ALL)
 
-    assert "Заметка не может быть пустой" in text
-    assert flow.screen() == Screen.WAITING_NOTE
+        assert game_id not in [game.id for game in storage.get(USER_ID).games]
 
+    def test_age_filter_hides_adult_games(self, flow, gateway, profile_service):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_AGE)
+        flow(text="13")
 
-def test_note_without_trip_returns_to_menu(flow: Flow):
-    flow.command_start()
-    flow.storage.save(USER_ID, flow.storage.get(USER_ID).at_note_input(999))
+        flow(text=ButtonText.PICK)
+        flow(callback=CallbackAction.PICK_ALL)
 
-    text = flow.send_text("Заметка к несуществующей поездке")
+        message = gateway.last_text
+        # В тестовом каталоге только Portal 2 подходит подростку (10+)
+        assert "Portal 2" in message
+        assert "The Witcher 3" not in message
+        assert "возраст: 13" in message
 
-    assert "Поездка не найдена" in text
-    assert flow.last_buttons == ["В главное меню"]
+    def test_adult_sees_all_games(self, flow, gateway):
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_AGE)
+        flow(text="30")
 
+        flow(text=ButtonText.PICK)
+        flow(callback=CallbackAction.PICK_ALL)
 
-# ====================================================================== #
-# Обработка неправильного ввода
-# ====================================================================== #
-def test_unknown_text_in_main_menu(flow: Flow):
-    flow.command_start()
+        assert "The Witcher 3: Wild Hunt" in gateway.last_text
 
-    text = flow.send_text("какой-то текст")
+    def test_no_suitable_games_for_child(self, flow, gateway, games_provider):
+        games_provider.details = {
+            game.id: make_details(game, min_age=18) for game in games_provider.games
+        }
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_AGE)
+        flow(text="6")
 
-    assert text == (
-        "Нераспознанная команда. Пожалуйста, нажмите выбранную кнопку в меню."
-    )
+        flow(text=ButtonText.PICK)
+        message = flow(callback=CallbackAction.PICK_ALL)
 
+        assert "не найдено" in message.lower() or "Не удалось найти" in message
 
-def test_unknown_text_while_viewing_cities(flow: Flow):
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.send_text("Москва")
+    def test_played_history_pagination(self, flow, gateway, library_service, storage):
+        now = datetime(2026, 5, 1, 12, 0)
+        for index in range(5):
+            library_service.add_played(
+                USER_ID, make_game(500 + index, f"Игра {index}"), played_at=now - timedelta(days=index)
+            )
 
-    text = flow.send_text("просто текст")
+        flow(text=ButtonText.PLAYED)
+        assert "Страница 1 из 2" in gateway.last_text
 
-    assert "Нераспознанная команда" in text
-    assert flow.screen() == Screen.NEARBY_CITIES
+        message = flow(callback="lib:2")
+        assert "Страница 2 из 2" in message
+        assert "Игра 4" in message
 
+    def test_delete_played_game(self, flow, gateway, library_service, storage):
+        record = library_service.add_played(USER_ID, make_game(32, "The Witcher 3"))
 
-def test_unsupported_message_is_ignored(flow: Flow):
-    flow.command_start()
-    before = len(flow.gateway.events)
+        flow(text=ButtonText.PLAYED)
+        message = flow(callback=f"del:{record.id}")
 
-    flow.handlers.on_unsupported(
-        make_message("", CHAT_ID, USER_ID, content_type="photo")
-    )
+        assert texts.PLAYED_REMOVED.format("The Witcher 3") in message
+        assert library_service.played_game_ids(USER_ID) == set()
 
-    assert len(flow.gateway.events) == before
+    def test_review_is_too_long(self, flow, gateway, library_service):
+        record = library_service.add_played(USER_ID, make_game(32, "The Witcher 3"))
+        flow(text=ButtonText.PLAYED)
+        flow(callback=f"rec:{record.id}")
+        flow(callback=f"rev:{record.id}")
 
+        message = flow(text="с" * 1200)
 
-def test_unknown_callback_data(flow: Flow):
-    flow.command_start()
+        assert "не должен превышать 1000" in message
+        assert texts.REVIEW_PROMPT in message
 
-    text = flow.press("что-то:непонятное")
+    def test_empty_review(self, flow, gateway, library_service):
+        record = library_service.add_played(USER_ID, make_game(32, "The Witcher 3"))
+        flow(text=ButtonText.PLAYED)
+        flow(callback=f"rev:{record.id}")
 
-    assert "Нераспознанная команда" in text
+        message = flow(text="   ")
 
+        assert "не может быть пустым" in message
 
-def test_callback_is_answered(flow: Flow):
-    flow.command_start()
+    def test_review_is_visible_in_list_flow(self, flow, gateway, library_service, storage):
+        record = library_service.add_played(USER_ID, make_game(32, "The Witcher 3"))
+        flow(text=ButtonText.PLAYED)
+        flow(callback=f"rec:{record.id}")
+        flow(callback=f"rev:{record.id}")
+        flow(text="Очень понравилась")
 
-    flow.press("holidays")
+        message = flow(callback=f"lib:{storage.get(USER_ID).library_page}")
+        assert texts.PLAYED_TITLE in message
 
-    assert flow.gateway.answered_callbacks == 1
+        message = flow(callback=f"rec:{record.id}")
+        assert "Отзыв: Очень понравилась" in message
 
 
-def test_menu_buttons_work_from_any_screen(flow: Flow):
-    """Reply-кнопки главного меню действуют даже во время ввода города."""
-    flow.command_start()
-    flow.send_text("Города куда съездить")
+# ---------------------------------------------------------------------- #
+# Сценарий 5. Ошибки внешних сервисов и базы данных
+# ---------------------------------------------------------------------- #
+class TestScenarioErrors:
+    def test_catalog_unavailable(self, flow, gateway, games_provider, storage):
+        games_provider.errors["genres"] = GenresUnavailableError("rawg", "timeout")
 
-    text = flow.send_text("История поездок")
+        message = flow(text=ButtonText.PICK)
 
-    assert "История поездок пока пуста" in text
-    assert flow.screen() == Screen.HISTORY
+        assert GenresUnavailableError.user_message in message
+        assert storage.get(USER_ID).screen == ContextScreen.MAIN_MENU
 
+        # Бот продолжает работать
+        games_provider.errors.clear()
+        message = flow(text=ButtonText.PICK)
+        assert texts.GENRES_TITLE in message
 
-# ====================================================================== #
-# Отказоустойчивость
-# ====================================================================== #
-def test_unexpected_error_does_not_crash_bot(flow: Flow, monkeypatch):
-    def boom(self, *args, **kwargs):
-        raise RuntimeError("database is down")
+    def test_search_unavailable(self, flow, gateway, games_provider):
+        games_provider.errors["search"] = GamesUnavailableError("rawg", "503")
+        flow(text=ButtonText.PICK)
 
-    monkeypatch.setattr(TripService, "create_trip", boom)
-    flow.command_start()
-    flow.send_text("Города куда съездить")
-    flow.send_text("Москва")
+        message = flow(callback=CallbackAction.PICK_ALL)
 
-    text = flow.press("city:1")  # исключение не должно выйти наружу
+        assert GamesUnavailableError.user_message in message
 
-    assert "Произошла ошибка. Попробуйте ещё раз позже." in text
-    assert flow.last_buttons == ["В главное меню"]
-    # сообщение об ошибке отправлено именно в чат пользователя
-    assert flow.gateway.last_event.chat_id == CHAT_ID
+    def test_franchise_search_unavailable(self, flow, gateway, games_provider):
+        games_provider.errors["franchises"] = GamesUnavailableError("rawg", "503")
+        flow(text=ButtonText.FRANCHISE)
 
+        message = flow(text="Marvel")
 
-def test_unexpected_error_in_history_does_not_crash_bot(flow: Flow, monkeypatch):
-    def boom(self, *args, **kwargs):
-        raise RuntimeError("database is down")
+        assert GamesUnavailableError.user_message in message
 
-    monkeypatch.setattr(TripService, "get_history", boom)
-    flow.command_start()
+    def test_region_service_unavailable(self, flow, gateway, ip_provider):
+        ip_provider.error = RegionUnavailableError("ipapi", "429")
+        flow(text=ButtonText.PROFILE)
+        flow(callback=CallbackAction.PROFILE_IP)
 
-    text = flow.send_text("История поездок")
+        message = flow(text="8.8.8.8")
 
-    assert "Произошла ошибка. Попробуйте ещё раз позже." in text
-    assert flow.gateway.last_event.chat_id == CHAT_ID
+        assert RegionUnavailableError.user_message in message
+        assert texts.PROFILE_TITLE in message
 
+    def test_database_unavailable(self, flow, gateway, profile_service, monkeypatch):
+        monkeypatch.setattr(
+            profile_service, "get_profile", lambda user_id: (_ for _ in ()).throw(DatabaseError())
+        )
 
-def test_chat_id_detected_for_message_and_callback(flow: Flow):
-    from travelhunter.presentation.handlers import BotHandlers
+        message = flow(text=ButtonText.PROFILE)
 
-    assert BotHandlers._chat_id_of(make_message("текст", CHAT_ID, USER_ID)) == CHAT_ID
-    assert BotHandlers._chat_id_of(make_callback("menu", CHAT_ID, USER_ID)) == CHAT_ID
+        assert DatabaseError.user_message in message
 
+    def test_played_list_database_error(self, flow, gateway, library_service, monkeypatch):
+        monkeypatch.setattr(
+            library_service,
+            "get_played_history",
+            lambda *args, **kwargs: (_ for _ in ()).throw(DatabaseError()),
+        )
 
-def test_message_without_user_is_ignored(flow: Flow):
-    from types import SimpleNamespace
+        message = flow(text=ButtonText.PLAYED)
 
-    broken = SimpleNamespace(text="привет", chat=None, from_user=None, content_type="text")
+        assert DatabaseError.user_message in message
 
-    flow.handlers.on_text(broken)
+    def test_bot_survives_sequence_of_errors(self, flow, gateway, games_provider):
+        games_provider.errors["genres"] = GenresUnavailableError("rawg", "timeout")
+        flow(text=ButtonText.PICK)
+        games_provider.errors["search"] = GamesUnavailableError("rawg", "timeout")
+        flow(text=ButtonText.PICK)
+        games_provider.errors.clear()
 
-    assert flow.gateway.events == []
+        message = flow(text=ButtonText.PICK)
 
+        assert texts.GENRES_TITLE in message
 
-def test_handlers_register_in_telebot(flow: Flow):
-    """Проверяем, что обработчики действительно регистрируются в telebot."""
-    import telebot
+    def test_unsupported_messages_are_ignored(self, flow, gateway, handlers):
+        gateway.clear()
 
-    bot = telebot.TeleBot("123456789:TEST-TOKEN-FOR-UNIT-TESTS")
-    handlers = BotHandlers(
-        bot=bot,
-        gateway=flow.gateway,
-        storage=flow.storage,
-        screens=flow.handlers._screens,  # noqa: SLF001 - проверка регистрации
-        city_service=flow.handlers._city_service,  # noqa: SLF001
-    )
+        handlers.on_unsupported(make_message("", chat_id=CHAT_ID, user_id=USER_ID, content_type="photo"))
 
-    handlers.register()
+        assert gateway.events == []
 
-    assert len(bot.message_handlers) >= 3
-    assert len(bot.callback_query_handlers) == 1
+    def test_unknown_text(self, flow, gateway):
+        message = flow(text="какая сегодня погода?")
+
+        assert texts.UNKNOWN_COMMAND in message
+
+
+# ---------------------------------------------------------------------- #
+# Сценарий 6. Первый запуск и неизвестное состояние
+# ---------------------------------------------------------------------- #
+class TestScenarioFirstLaunch:
+    def test_first_message_shows_start_screen(self, handlers, gateway, storage):
+        handlers.on_text(make_message("Привет", chat_id=CHAT_ID, user_id=USER_ID))
+
+        assert texts.START_WELCOME in gateway.last_text
+        assert storage.has(USER_ID) is True
+
+    def test_start_command_for_new_user(self, handlers, gateway):
+        handlers.on_start(make_message("/start", chat_id=CHAT_ID, user_id=USER_ID))
+
+        assert texts.START_WELCOME in gateway.last_text
+
+    def test_second_start_shows_menu(self, handlers, gateway, storage):
+        handlers.on_start(make_message("/start", chat_id=CHAT_ID, user_id=USER_ID))
+        gateway.clear()
+
+        handlers.on_start(make_message("/start", chat_id=CHAT_ID, user_id=USER_ID))
+
+        assert texts.MAIN_MENU_WELCOME in gateway.last_text
+
+    def test_users_are_isolated(self, handlers, gateway, storage, library_service):
+        handlers.on_start(make_message("/start", chat_id=CHAT_ID, user_id=USER_ID))
+        handlers.on_callback(make_callback(CallbackAction.PICK_ALL, chat_id=CHAT_ID, user_id=USER_ID))
+        library_service.add_played(USER_ID, make_game(32, "The Witcher 3"))
+
+        handlers.on_start(make_message("/start", chat_id=101, user_id=300))
+        handlers.on_text(make_message(ButtonText.PLAYED, chat_id=101, user_id=300))
+
+        assert texts.PLAYED_EMPTY in gateway.last_text
+        assert storage.get(300).screen == ContextScreen.PLAYED_LIST
+
+    def test_button_from_old_message_after_restart(self, flow, gateway, storage):
+        # Пользователь нажал старую кнопку, а список игр уже не сохранён
+        storage.save(USER_ID, UserContext().at_main_menu())
+
+        message = flow(callback=CallbackAction.BACK_GAMES)
+
+        assert texts.MAIN_MENU_WELCOME in message
