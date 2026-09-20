@@ -18,6 +18,9 @@ python3 --version     # ожидается Python 3.10.x или новее
 
 * Windows: установщик с <https://www.python.org/downloads/>, при установке
   отметьте **Add Python to PATH**.
+* Проект проверен на Python 3.11–3.14: для 3.14 берите `psycopg2-binary`
+  2.9.13+ и `SQLAlchemy` 2.0.44+ (в `requirements.txt` указаны именно такие
+  нижние границы, готовые wheel-пакеты под Windows x64 у них есть).
 * macOS: `brew install python@3.11`.
 * Linux (Debian/Ubuntu): `sudo apt install python3 python3-venv python3-pip`.
 
@@ -41,6 +44,12 @@ pip install -r requirements.txt          # основные зависимост
 pip install -r requirements-dev.txt      # + pytest для тестов
 ```
 
+> **Windows.** Если после установки `python run.py` пишет
+> `ModuleNotFoundError: No module named 'telebot'`, значит пакеты поставились в
+> другой интерпретатор. Проверьте: `python -c "import sys; print(sys.executable)"`
+> — и устанавливайте зависимости именно им: `C:\path\to\python.exe -m pip install -r requirements.txt`
+> (или активируйте `.venv` заново в том же окне PowerShell).
+
 Состав `requirements.txt`:
 
 | Пакет | Зачем |
@@ -50,6 +59,7 @@ pip install -r requirements-dev.txt      # + pytest для тестов
 | `SQLAlchemy` 2.0 | ORM для работы с базой данных |
 | `psycopg2-binary` | драйвер PostgreSQL |
 | `python-dotenv` | загрузка настроек из файла `.env` |
+| `PySocks` | поддержка `socks5://`-прокси в `PROXY_URL` (нужен, если Telegram API блокируется провайдером) |
 
 ## Шаг 4. Создать Telegram-бота и получить токен
 
@@ -79,9 +89,26 @@ pip install -r requirements-dev.txt      # + pytest для тестов
 
 ### Вариант А. PostgreSQL в Docker (рекомендуется)
 
-```bash
+**Что такое Docker (одним абзацем).** Docker упаковывает программу вместе с её
+окружением в *образ* (image), из которого запускается *контейнер* — изолированный
+процесс со своими портами и файлами. `docker-compose.yml` описывает несколько
+контейнеров сразу, а `docker compose up -d` их создаёт и запускает в фоне.
+Никакого PostgreSQL в систему устанавливать не нужно.
+
+1. Установите [Docker Desktop для Windows](https://www.docker.com/products/docker-desktop/)
+   (при установке согласитесь на WSL 2) и запустите его — дождитесь значка кита
+   в трее.
+2. Перейдите **в папку проекта** (это обязательно: Docker ищет
+   `docker-compose.yml` в текущей директории):
+
+```powershell
+cd C:\Users\User\Downloads\GemInfo-arena-01a0bfe2-geminfo
 docker compose up -d
 ```
+
+Первый запуск скачивает образы (несколько минут), повторные — стартуют за
+секунды. Проверка: `docker compose ps` (статус `Up`/`running`),
+`docker compose logs postgres` (строка `database system is ready to accept connections`).
 
 Команды из `docker-compose.yml`:
 
@@ -94,12 +121,50 @@ docker compose up -d
 Остановка: `docker compose down` (данные сохранятся), полное удаление:
 `docker compose down -v`.
 
+В Adminer (<http://localhost:8080>) войдите так: система **PostgreSQL**, сервер
+**postgres** (имя контейнера, не `localhost`!), пользователь `postgres`, пароль
+`postgres`, база `gamehunter`.
+
+Полезные команды Docker:
+
+| Команда | Что делает |
+|---------|------------|
+| `docker compose ps` | статус контейнеров проекта |
+| `docker compose logs -f postgres` | лог базы (выход — `Ctrl+C`) |
+| `docker compose restart` | перезапустить контейнеры |
+| `docker compose down` | остановить и удалить контейнеры (данные останутся) |
+| `docker compose down -v` | то же + удалить volume, т.е. всю базу |
+| `docker compose exec postgres psql -U postgres -d gamehunter -c "\dt"` | список таблиц изнутри контейнера |
+
 ### Вариант Б. Локальный PostgreSQL
+
+**Windows.** Скачайте установщик [EDB PostgreSQL](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads),
+установите, **запомните пароль** суперпользователя `postgres` (на шаге
+«Database superuser password») и оставьте порт `5432`. Затем откройте
+«SQL Shell (psql)» из меню Пуск (на все вопросы жмите Enter, на пароль введите
+свой) и выполните:
+
+```sql
+CREATE DATABASE gamehunter;
+\q
+```
+
+В `.env` укажите свой пароль:
+
+```dotenv
+DATABASE_URL=postgresql+psycopg2://postgres:ВАШ_ПАРОЛЬ@localhost:5432/gamehunter
+```
+
+**Linux/macOS:**
 
 ```bash
 sudo -u postgres psql -c "CREATE DATABASE gamehunter;"
 sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
 ```
+
+Проверить подключение: `docker compose ps` (Вариант А) или `psql -U postgres -d gamehunter -c "\dt"`.
+Служба PostgreSQL стартует вместе с системой; вручную: `services.msc` →
+`postgresql-x64-16` → «Запустить» (Windows) либо `sudo systemctl start postgresql` (Linux).
 
 ### Вариант В. Без PostgreSQL (только для разработки)
 
@@ -127,13 +192,54 @@ RAWG_API_KEY=ваш_ключ_RAWG
 ```
 
 Необязательные настройки (значения по умолчанию уже заданы в `.env.example`):
-`IP_LOCATION_BASE_URL`, `CATALOG_LANGUAGE`, `MAX_GAMES`, `MAX_GENRES`,
+`PROXY_URL`, `IP_LOCATION_BASE_URL`, `CATALOG_LANGUAGE`, `MAX_GAMES`, `MAX_GENRES`,
 `MAX_FRANCHISES`, `DETAILS_FETCH_LIMIT`, `LIBRARY_PAGE_SIZE`,
 `REVIEW_MAX_LENGTH`, `DEFAULT_ORDERING`, `HTTP_TIMEOUT`, `CACHE_TTL_SECONDS`,
 `LOG_LEVEL`.
 
 Файл `.env` добавлен в `.gitignore` — в репозиторий попадает только шаблон
 `.env.example`.
+
+### Прокси и VPN: если `api.telegram.org` недоступен
+
+В ряде сетей (в первую очередь в России) прямые обращения к
+`api.telegram.org` блокируются или замедляются. Симптом — при запуске бота:
+
+```text
+requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='api.telegram.org', port=443):
+Max retries exceeded with url: /bot.../getMe ...
+```
+
+Бот при этом не «виснет», а печатает `[ОШИБКА СЕТИ]` и завершается с кодом 1.
+База данных и код здесь ни при чём: не проходит запрос к Telegram.
+
+Варианты решения:
+
+1. **Включить VPN на компьютере** (режим «вся система» / TUN) и запустить бота
+   заново — обычно этого достаточно, ничего настраивать не нужно.
+2. **Указать прокси в `.env`** — бот направит через него и запросы к Telegram,
+   и обращения к RAWG / сервису геолокации:
+
+   ```dotenv
+   PROXY_URL=socks5://127.0.0.1:1080
+   # с логином и паролем: socks5://user:password@host:port
+   # обычный HTTP-прокси:  http://host:port
+   ```
+
+   Для `socks5://` нужен пакет `PySocks` — он уже есть в `requirements.txt`
+   (`pip install -r requirements.txt`). Порт и адрес возьмите из настроек вашего
+   клиента (v2rayN, Outline, Clash, Tor Browser = `socks5://127.0.0.1:9150`).
+3. Проверить доступность без бота:
+
+   ```powershell
+   curl.exe -m 10 https://api.telegram.org
+   ```
+
+   Если ответ приходит (даже `{"ok":false,...}`) — сеть работает, проблема в
+   настройках бота; если таймаут — нужен VPN/прокси.
+
+Логин и пароль прокси в логах не печатаются: приложение выводит адрес в виде
+`socks5://***@127.0.0.1:1080` (`Application._safe_proxy`, `JsonHttpClient.safe_proxy`).
 
 ## Шаг 8. Создать таблицы и запустить бота
 
@@ -227,12 +333,18 @@ SVG-мокапы всех 17 экранов появятся в `docs/mockups/`.
 | `[ОШИБКА НАСТРОЙКИ] Не задан BOT_TOKEN…` | нет `.env` или пустой токен | `cp .env.example .env` и заполнить `BOT_TOKEN` |
 | В логе `RAWG_API_KEY не задан — каталог игр недоступен` | нет ключа каталога | получить ключ на rawg.io и указать в `.env` (бот запускается, но подборка не работает) |
 | В логе `DATABASE_URL не задан — используется локальный SQLite` | не указана строка подключения | это не ошибка: для разработки подойдёт SQLite, для продакшена укажите PostgreSQL |
-| `A request to the Telegram API was unsuccessful. Error code: 401` | неверный токен бота | пересоздать токен у @BotFather |
-| `A request to the Telegram API was unsuccessful. Error code: 409. Conflict: terminated by other getUpdates request` | бот запущен дважды | остановить второй процесс |
+| `[ОШИБКА СЕТИ] Нет связи с api.telegram.org …` / `requests.exceptions.ConnectTimeout` | Telegram API блокируется или недоступен в вашей сети | включить VPN либо задать `PROXY_URL=socks5://127.0.0.1:1080` в `.env` (+ `pip install pysocks`) |
+| `[ОШИБКА НАСТРОЙКИ] … Error code: 401` | неверный токен бота | пересоздать токен у @BotFather |
+| `[ОШИБКА ЗАПУСКА] … Error code: 409. Conflict: terminated by other getUpdates request` | бот запущен дважды | закрыть второе окно/процесс (`Ctrl+C`), затем запустить снова |
 | `[ОШИБКА БАЗЫ ДАННЫХ] …` при запуске | PostgreSQL не запущен или неверный `DATABASE_URL` | `docker compose up -d`, проверить строку подключения |
 | «Не удалось получить список игр…» в Telegram | ключ RAWG неверный или исчерпан лимит | проверить ключ и лимиты в профиле RAWG |
 | «Не удалось определить регион по IP-адресу…» | исчерпан лимит ipapi.co или адрес локальный | попробовать позже, использовать публичный IP (2ip.ru) |
 | `ModuleNotFoundError: No module named 'gamehunter'` | запуск не из корня проекта | `cd GemInfo` или `export PYTHONPATH=$(pwd)` |
+| `ModuleNotFoundError: No module named 'telebot'` | зависимости установлены в другой интерпретатор Python | `python -m pip install -r requirements.txt` тем же `python`, которым запускаете бота; либо активируйте `.venv` |
+| `no configuration file provided: not found` при `docker compose up -d` | команда запущена не в папке проекта | `cd C:\path\to\GemInfo` (там должен лежать `docker-compose.yml`) и повторить |
+| `Bind for 0.0.0.0:5432 failed: port is already allocated` | порт 5432 занят локальным PostgreSQL | остановить службу `postgresql-x64-…` в `services.msc` **или** поменять порт в `docker-compose.yml` (`"5433:5432"`) и в `DATABASE_URL` |
+| `connection refused` / `password authentication failed` | неверный `DATABASE_URL` или PostgreSQL не запущен | сверить пользователя, пароль, порт и имя базы; `docker compose ps` |
+| `ModuleNotFoundError: No module named 'socks'` при `PROXY_URL=socks5://…` | не установлен PySocks | `pip install pysocks` (входит в `requirements.txt`) |
 | `error: externally-managed-environment` при `pip install` | системный Python защищён (PEP 668) | использовать виртуальное окружение `.venv` |
 | Мокапы не сохраняются в PNG | не установлен `cairosvg` | `pip install cairosvg` (необязательно) |
 
@@ -252,6 +364,8 @@ LOG_LEVEL=DEBUG
 | `Непредвиденная ошибка при поиске игр` | ошибка внутри сервиса домена (показывается трассировка) |
 | `Экран GameListScreen: rawg timeout` | ошибка внешнего сервиса, перехваченная `safe_handler` |
 | `Регион по IP 5.188.0.1: Kazan (RU), часовой пояс Europe/Moscow` | успешное определение региона |
+| `Запросы к внешним API идут через прокси socks5://***@127.0.0.1:1080` | включён `PROXY_URL` (пароль скрыт) |
+| `[ОШИБКА СЕТИ]` и выход с кодом 1 | нет связи с Telegram API — нужен VPN или прокси |
 
 Логи службы Telegram (`telebot`) ограничены уровнем WARNING, чтобы не мешать
 чтению сообщений приложения.

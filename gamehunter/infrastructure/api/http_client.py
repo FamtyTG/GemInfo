@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Dict, Optional
 
 import requests
@@ -21,9 +22,29 @@ logger = logging.getLogger(__name__)
 class JsonHttpClient:
     """Тонкая обёртка над requests.Session, возвращающая JSON."""
 
-    def __init__(self, timeout: int = 10, session: Optional[requests.Session] = None) -> None:
+    def __init__(
+        self,
+        timeout: int = 10,
+        session: Optional[requests.Session] = None,
+        proxy: str = "",
+    ) -> None:
         self._timeout = timeout
         self._session = session or requests.Session()
+        self._proxy = (proxy or "").strip()
+        if self._proxy:
+            # Прокси используется, когда внешние сервисы недоступны напрямую
+            self._session.proxies = {"http": self._proxy, "https": self._proxy}
+            logger.info("HTTP-запросы идут через прокси %s", self.safe_proxy)
+
+    @property
+    def proxy(self) -> str:
+        """Адрес прокси (пустая строка — запросы идут напрямую)."""
+        return self._proxy
+
+    @property
+    def safe_proxy(self) -> str:
+        """Адрес прокси для логов: логин и пароль скрыты."""
+        return re.sub(r"://[^/@\s]*@", "://***@", self._proxy)
 
     def get_json(
         self,

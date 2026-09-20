@@ -38,6 +38,17 @@ def env(monkeypatch, tmp_path):
     return monkeypatch
 
 
+@pytest.fixture(autouse=True)
+def _reset_telegram_proxy():
+    """Глобальный прокси telebot не должен «протекать» между тестами."""
+    from telebot import apihelper
+
+    original = apihelper.proxy
+    apihelper.proxy = None
+    yield
+    apihelper.proxy = original
+
+
 @pytest.fixture()
 def application(env) -> Application:
     app = Application(Settings.from_env(env_file=None))
@@ -115,6 +126,47 @@ class TestApplicationAssembly:
         assert isinstance(application.screens, ScreenContainer)
         assert isinstance(application.handlers, BotHandlers)
 
+    def test_proxy_is_applied_to_telegram_and_http(self, env, monkeypatch):
+        from telebot import apihelper
+
+        from gamehunter.infrastructure.api import JsonHttpClient
+
+        env.setenv("PROXY_URL", "socks5://user:pass@127.0.0.1:1080")
+        monkeypatch.setattr(apihelper, "proxy", None)
+
+        app = Application(Settings.from_env(env_file=None))
+        try:
+            assert apihelper.proxy == {
+                "http": "socks5://user:pass@127.0.0.1:1080",
+                "https": "socks5://user:pass@127.0.0.1:1080",
+            }
+            client = app.games_provider._http_client  # noqa: SLF001 - проверка wiring
+            assert isinstance(client, JsonHttpClient)
+            assert client.proxy == "socks5://user:pass@127.0.0.1:1080"
+        finally:
+            app.stop()
+            monkeypatch.setattr(apihelper, "proxy", None)
+
+    def test_proxy_credentials_are_hidden_in_logs(self, env, caplog):
+        import logging
+
+        env.setenv("PROXY_URL", "socks5://user:secret@127.0.0.1:1080")
+        app = Application(Settings.from_env(env_file=None))
+        try:
+            assert app._safe_proxy == "socks5://***@127.0.0.1:1080"  # noqa: SLF001
+        finally:
+            app.stop()
+
+        with caplog.at_level(logging.INFO):
+            assert "secret" not in caplog.text
+
+    def test_no_proxy_by_default(self, application: Application):
+        from telebot import apihelper
+
+        assert application.settings.proxy_url == ""
+        assert apihelper.proxy is None
+        assert application.games_provider._http_client.proxy == ""  # noqa: SLF001
+
     def test_settings_are_applied(self, application: Application):
         assert application.game_service.max_games == 4
         assert application.games_provider.is_configured is True
@@ -162,6 +214,7 @@ class TestApplicationAssembly:
 class TestApplicationRun:
     def test_run_registers_handlers_and_starts_polling(self, application: Application, monkeypatch):
         started = []
+        monkeypatch.setattr(application.bot, "get_me", lambda: None)
         monkeypatch.setattr(
             application.bot,
             "infinity_polling",
@@ -173,6 +226,17 @@ class TestApplicationRun:
         assert started
         assert application.bot.message_handlers
         assert application.bot.callback_query_handlers
+
+    def test_run_checks_connection_before_polling(self, application: Application, monkeypatch):
+        calls = []
+        monkeypatch.setattr(application.bot, "get_me", lambda: calls.append("get_me"))
+        monkeypatch.setattr(
+            application.bot, "infinity_polling", lambda *a, **kw: calls.append("polling")
+        )
+
+        application.run()
+
+        assert calls == ["get_me", "polling"]
 
     def test_stop_is_safe_twice(self, application: Application, monkeypatch):
         monkeypatch.setattr(application.bot, "stop_polling", lambda: None)
@@ -235,6 +299,55 @@ class TestMain:
 
         assert len(created) == 1
         assert stopped == created
+
+    def test_network_error_exits_with_hint(self, env, monkeypatch, capsys):
+        import requests
+
+        def boom(self):
+            raise requests.exceptions.ConnectTimeout("api.telegram.org недоступен")
+
+        monkeypatch.setattr(Application, "run", boom)
+
+        with pytest.raises(SystemExit) as info:
+            main()
+
+        assert info.value.code == 1
+        error = capsys.readouterr().err
+        assert "[ОШИБКА СЕТИ]" in error
+        assert "PROXY_URL" in error
+        assert "VPN" in error
+
+    def test_invalid_token_exits_with_hint(self, env, monkeypatch, capsys):
+        def boom(self):
+            raise ApiTelegramException(
+                "getMe", {"ok": False}, {"error_code": 401, "description": "Unauthorized"}
+            )
+
+        monkeypatch.setattr(Application, "run", boom)
+
+        with pytest.raises(SystemExit) as info:
+            main()
+
+        assert info.value.code == 1
+        error = capsys.readouterr().err
+        assert "[ОШИБКА НАСТРОЙКИ]" in error
+        assert "BOT_TOKEN" in error
+
+    def test_second_bot_instance_exits_with_hint(self, env, monkeypatch, capsys):
+        def boom(self):
+            raise ApiTelegramException(
+                "getUpdates",
+                {"ok": False},
+                {"error_code": 409, "description": "Conflict: terminated by other getUpdates request"},
+            )
+
+        monkeypatch.setattr(Application, "run", boom)
+
+        with pytest.raises(SystemExit) as info:
+            main()
+
+        assert info.value.code == 1
+        assert "[ОШИБКА ЗАПУСКА]" in capsys.readouterr().err
 
     def test_unexpected_startup_error_exits(self, env, monkeypatch, capsys):
         class BrokenApplication(Application):

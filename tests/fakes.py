@@ -353,6 +353,7 @@ class FakeSession:
         self.responses: List[FakeResponse] = list(responses or [])
         self.requests: List[Dict[str, Any]] = []
         self.error: Optional[Exception] = None
+        self.proxies: Dict[str, str] = {}
 
     def get(self, url, params=None, headers=None, timeout=None):
         self.requests.append(

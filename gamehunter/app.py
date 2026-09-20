@@ -13,10 +13,14 @@
 from __future__ import annotations
 
 import logging
+import re
 import sys
 from typing import Optional
 
+import requests
 import telebot
+from telebot import apihelper
+from telebot.apihelper import ApiTelegramException
 
 from gamehunter.config import Settings
 from gamehunter.domain.age_ratings import AgePolicy
@@ -58,7 +62,17 @@ class Application:
         self.database = Database(settings.database_url)
         self.database.create_all()
 
-        http_client = JsonHttpClient(timeout=settings.http_timeout)
+        # Прокси нужен, если api.telegram.org или каталог недоступны напрямую
+        if settings.proxy_url:
+            apihelper.proxy = {
+                "http": settings.proxy_url,
+                "https": settings.proxy_url,
+            }
+            logger.info("Telegram API используется через прокси %s", self._safe_proxy)
+
+        http_client = JsonHttpClient(
+            timeout=settings.http_timeout, proxy=settings.proxy_url
+        )
         self.games_provider = RawgClient(
             http_client,
             api_key=settings.rawg_api_key,
@@ -114,10 +128,18 @@ class Application:
 
         logger.info("Приложение GameHunter собрано")
 
+    @property
+    def _safe_proxy(self) -> str:
+        """Адрес прокси без логина и пароля — для логов."""
+        return re.sub(r"://[^/@\s]*@", "://***@", self.settings.proxy_url)
+
     # ------------------------------------------------------------------ #
     def run(self) -> None:
         """Регистрирует обработчики и запускает long polling."""
         self.handlers.register()
+        # Быстрая проверка сети и токена до запуска бесконечного опроса:
+        # так пользователь сразу видит причину, а не трассировку через минуту
+        self.bot.get_me()
         logger.info("Telegram-бот GameHunter запущен. Для остановки нажмите Ctrl+C")
         self.bot.infinity_polling(timeout=30, long_polling_timeout=25, skip_pending=True)
 
@@ -167,6 +189,38 @@ def main() -> None:
         application.run()
     except KeyboardInterrupt:
         logger.info("Получен сигнал остановки (Ctrl+C)")
+    except ApiTelegramException as exc:
+        logger.error("Telegram API отклонил запрос: %s", exc)
+        if exc.error_code == 401:
+            print(
+                "[ОШИБКА НАСТРОЙКИ] Telegram отклонил токен бота (401 Unauthorized). "
+                "Проверьте BOT_TOKEN — его выдаёт @BotFather.",
+                file=sys.stderr,
+            )
+        elif exc.error_code == 409:
+            print(
+                "[ОШИБКА ЗАПУСКА] Бот уже запущен в другом процессе (409 Conflict). "
+                "Остановите второй экземпляр и попробуйте снова.",
+                file=sys.stderr,
+            )
+        else:
+            print(f"[ОШИБКА TELEGRAM] {exc}", file=sys.stderr)
+        sys.exit(1)
+    except requests.exceptions.RequestException as exc:
+        logger.error("Нет соединения с Telegram API: %s", exc)
+        print(
+            "[ОШИБКА СЕТИ] Не удалось соединиться с api.telegram.org.",
+            file=sys.stderr,
+        )
+        print(
+            "Проверьте интернет и доступ к Telegram. Если api.telegram.org "
+            "недоступен напрямую — включите VPN или укажите прокси в .env:\n"
+            "    PROXY_URL=socks5://127.0.0.1:1080\n"
+            "(для socks5-прокси дополнительно установите PySocks: "
+            "pip install pysocks)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     finally:
         application.stop()
 

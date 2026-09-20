@@ -55,6 +55,10 @@ class Settings:
     rawg_api_key: str = ""
     ip_location_base_url: str = "https://ipapi.co"
     catalog_language: str = "ru"
+    #: Прокси для всех внешних запросов (Telegram API, RAWG, геолокация).
+    #: Нужен, если api.telegram.org недоступен напрямую (например, без VPN).
+    #: Примеры: "socks5://127.0.0.1:1080", "http://127.0.0.1:8080".
+    proxy_url: str = ""
 
     # --- Параметры предметной области ---
     max_games: int = 5                # сколько игр показывать на одной странице
@@ -105,6 +109,7 @@ class Settings:
             ).strip()
             or "https://ipapi.co",
             catalog_language=os.getenv("CATALOG_LANGUAGE", "ru").strip() or "ru",
+            proxy_url=os.getenv("PROXY_URL", "").strip(),
             max_games=_env_int("MAX_GAMES", 5),
             max_genres=_env_int("MAX_GENRES", 12),
             max_franchises=_env_int("MAX_FRANCHISES", 5),

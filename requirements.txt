@@ -6,3 +6,4 @@ requests>=2.31,<3.0           # HTTP-запросы к внешним API (RAWG,
 SQLAlchemy>=2.0,<3.0          # ORM для работы с базой данных
 psycopg2-binary>=2.9,<3.0     # драйвер PostgreSQL
 python-dotenv>=1.0,<2.0       # загрузка настроек из файла .env
+PySocks>=1.7,<2.0             # поддержка socks5-прокси (PROXY_URL), если Telegram недоступен напрямую

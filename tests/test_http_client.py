@@ -118,3 +118,38 @@ class TestAllow404:
 
         with pytest.raises(ExternalServiceError):
             client.get_json("https://api.example", allow_404=True)
+
+
+class TestProxy:
+    """Проксирование запросов через PROXY_URL."""
+
+    def test_proxy_is_applied_to_session(self, session: FakeSession):
+        client = JsonHttpClient(
+            timeout=7, session=session, proxy="socks5://127.0.0.1:1080"
+        )
+
+        assert session.proxies == {
+            "http": "socks5://127.0.0.1:1080",
+            "https": "socks5://127.0.0.1:1080",
+        }
+        assert client.proxy == "socks5://127.0.0.1:1080"
+
+    def test_no_proxy_leaves_session_clean(self, client: JsonHttpClient, session: FakeSession):
+        assert client.proxy == ""
+        assert session.proxies == {}
+
+    def test_empty_proxy_string_ignored(self, session: FakeSession):
+        JsonHttpClient(timeout=7, session=session, proxy="   ")
+
+        assert session.proxies == {}
+
+    def test_credentials_are_hidden_in_safe_proxy(self, session: FakeSession):
+        client = JsonHttpClient(
+            timeout=7, session=session, proxy="socks5://user:secret@127.0.0.1:1080"
+        )
+
+        assert client.safe_proxy == "socks5://***@127.0.0.1:1080"
+        assert "secret" not in client.safe_proxy
+
+    def test_safe_proxy_without_credentials(self, client: JsonHttpClient):
+        assert client.safe_proxy == ""

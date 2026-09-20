@@ -234,3 +234,22 @@ class TestSqliteWarning:
         Settings.from_env(env_file=None)
 
         assert "DATABASE_URL не задан" not in caplog.text
+
+
+class TestProxySetting:
+    """Прокси для Telegram API и внешних сервисов (PROXY_URL)."""
+
+    def test_reads_proxy_from_env(self, env):
+        env.setenv("PROXY_URL", "socks5://127.0.0.1:1080")
+
+        assert Settings.from_env(env_file=None).proxy_url == "socks5://127.0.0.1:1080"
+
+    def test_proxy_is_empty_by_default(self, env):
+        env.delenv("PROXY_URL", raising=False)
+
+        assert Settings.from_env(env_file=None).proxy_url == ""
+
+    def test_empty_value_means_no_proxy(self, env):
+        env.setenv("PROXY_URL", "   ")
+
+        assert Settings.from_env(env_file=None).proxy_url == ""

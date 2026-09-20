@@ -11,6 +11,13 @@
 (`HTTP_TIMEOUT`, по умолчанию 10 секунд), проверяет код ответа, разбирает JSON и
 преобразует сетевые ошибки в доменное исключение `ExternalServiceError`.
 
+Если в `.env` задан `PROXY_URL`, клиент устанавливает `session.proxies` для
+`http` и `https` — через прокси идут и RAWG, и сервис геолокации. Запросы к
+Telegram API проксируются отдельно: `Application` присваивает глобальный
+`telebot.apihelper.proxy` (для `socks5://` нужен пакет `PySocks`). Учётные
+данные прокси в логах скрываются (`JsonHttpClient.safe_proxy` →
+`socks5://***@host:port`).
+
 ```
 Экран → Сервис домена → Интерфейс (GamesProvider / IpLocationProvider)
                                     │
