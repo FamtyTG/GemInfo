@@ -474,6 +474,7 @@ python -m pytest --collect-only -q | tail -1
 | [08_plan_proekta.md](docs/08_plan_proekta.md) | план по этапам, чек-лист ручного тестирования, работа с Git, риски |
 | [09_testirovanie.md](docs/09_testirovanie.md) | состав тестов, что проверяется по слоям, пример сквозного теста |
 | [10_ae_animaciya_kartochek.md](docs/10_ae_animaciya_kartochek.md) | анимированные карточки для After Effects: раскадровка, слои, экспорт GIF |
+| [11_pamyatka_stop_i_start.md](docs/11_pamyatka_stop_i_start.md) | памятка: как остановить и снова запустить бота, Docker и PostgreSQL на Windows |
 
 Диаграммы DrawIO (открываются на [app.diagrams.net](https://app.diagrams.net)):
 
