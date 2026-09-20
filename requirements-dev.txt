@@ -4,3 +4,6 @@
 -r requirements.txt
 
 pytest>=8.0
+
+# генерация анимированных карточек для After Effects (make ae-assets)
+Pillow>=10.0

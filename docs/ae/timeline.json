@@ -1,0 +1,1410 @@
+{
+  "project": "GameHunter",
+  "generated_by": "scripts/generate_ae_assets.py",
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  },
+  "ae_fps": 30,
+  "gif_fps": 15,
+  "palette": {
+    "background": "#EFEFF4",
+    "bubble": "#FFFFFF",
+    "accent": "#2481CC",
+    "text": "#1C1C1E",
+    "note": "#8E8E93"
+  },
+  "cards": [
+    {
+      "key": "01_start",
+      "title": "Экран 1. Приветствие",
+      "heading": "Приветствие",
+      "description": "Первое сообщение бота после /start: коротко о том, что он умеет, и кнопка «Старт». Появление сообщения повторяет настоящий Telegram — сначала «печатает…», затем пузырь текста и клавиатура.",
+      "screen_note": "Показывается один раз при первом запуске бота (команда /start).",
+      "canvas": {
+        "width": 1080,
+        "height": 1350
+      },
+      "card": {
+        "width": 972,
+        "height": 1006,
+        "x": 54,
+        "y": 172
+      },
+      "scale": 2.592,
+      "duration_seconds": 6.0,
+      "gif_fps": 15,
+      "ae_fps": 30,
+      "gif_file": "cards/01_start.gif",
+      "gif_bytes": 941620,
+      "frames_exported": 0,
+      "layers": [
+        {
+          "name": "shadow",
+          "file": "layers/01_start/00_shadow.png",
+          "x": -39,
+          "y": 79,
+          "width": 1158,
+          "height": 1192,
+          "z": 0
+        },
+        {
+          "name": "backdrop",
+          "file": "layers/01_start/01_backdrop.png",
+          "x": 54,
+          "y": 172,
+          "width": 972,
+          "height": 1006,
+          "z": 1
+        },
+        {
+          "name": "header",
+          "file": "layers/01_start/02_header.png",
+          "x": 54,
+          "y": 172,
+          "width": 972,
+          "height": 192,
+          "z": 2
+        },
+        {
+          "name": "typing_0",
+          "file": "layers/01_start/03_typing_0.png",
+          "x": 85,
+          "y": 737,
+          "width": 161,
+          "height": 93,
+          "z": 3
+        },
+        {
+          "name": "typing_1",
+          "file": "layers/01_start/04_typing_1.png",
+          "x": 85,
+          "y": 737,
+          "width": 161,
+          "height": 93,
+          "z": 4
+        },
+        {
+          "name": "typing_2",
+          "file": "layers/01_start/05_typing_2.png",
+          "x": 85,
+          "y": 737,
+          "width": 161,
+          "height": 93,
+          "z": 5
+        },
+        {
+          "name": "bubble",
+          "file": "layers/01_start/06_bubble.png",
+          "x": 85,
+          "y": 405,
+          "width": 910,
+          "height": 456,
+          "z": 6
+        },
+        {
+          "name": "reply_keyboard",
+          "file": "layers/01_start/07_reply_keyboard.png",
+          "x": 54,
+          "y": 903,
+          "width": 972,
+          "height": 176,
+          "z": 7
+        },
+        {
+          "name": "caption",
+          "file": "layers/01_start/08_caption.png",
+          "x": 54,
+          "y": 1100,
+          "width": 972,
+          "height": 47,
+          "z": 8
+        }
+      ],
+      "steps": [
+        {
+          "layer": "backdrop",
+          "effect": "fade",
+          "start_s": 0.0,
+          "duration_s": 0.35,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 0,
+            "duration_frames": 10,
+            "out_frame": 10
+          }
+        },
+        {
+          "layer": "shadow",
+          "effect": "fade",
+          "start_s": 0.0,
+          "duration_s": 0.35,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 0,
+            "duration_frames": 10,
+            "out_frame": 10
+          }
+        },
+        {
+          "layer": "header",
+          "effect": "slide_up",
+          "start_s": 0.05,
+          "duration_s": 0.45,
+          "ease": "ease_out",
+          "offset_px": 10,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 2,
+            "duration_frames": 14,
+            "out_frame": 15
+          }
+        },
+        {
+          "layer": "typing_0",
+          "effect": "pop",
+          "start_s": 0.45,
+          "duration_s": 0.22,
+          "ease": "back_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 14,
+            "duration_frames": 7,
+            "out_frame": 20
+          }
+        },
+        {
+          "layer": "typing_0",
+          "effect": "hide",
+          "start_s": 0.62,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 19,
+            "duration_frames": 1,
+            "out_frame": 19
+          }
+        },
+        {
+          "layer": "typing_1",
+          "effect": "pop",
+          "start_s": 0.62,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 19,
+            "duration_frames": 1,
+            "out_frame": 19
+          }
+        },
+        {
+          "layer": "typing_1",
+          "effect": "hide",
+          "start_s": 0.79,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 24,
+            "duration_frames": 1,
+            "out_frame": 24
+          }
+        },
+        {
+          "layer": "typing_2",
+          "effect": "pop",
+          "start_s": 0.79,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 24,
+            "duration_frames": 1,
+            "out_frame": 24
+          }
+        },
+        {
+          "layer": "typing_2",
+          "effect": "hide",
+          "start_s": 0.8,
+          "duration_s": 0.18,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 24,
+            "duration_frames": 5,
+            "out_frame": 29
+          }
+        },
+        {
+          "layer": "bubble",
+          "effect": "slide_up",
+          "start_s": 1.05,
+          "duration_s": 0.55,
+          "ease": "ease_out",
+          "offset_px": 26,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 32,
+            "duration_frames": 16,
+            "out_frame": 48
+          }
+        },
+        {
+          "layer": "reply_keyboard",
+          "effect": "keyboard_up",
+          "start_s": 1.75,
+          "duration_s": 0.45,
+          "ease": "ease_out",
+          "offset_px": 70,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 52,
+            "duration_frames": 14,
+            "out_frame": 66
+          }
+        },
+        {
+          "layer": "caption",
+          "effect": "fade",
+          "start_s": 2.3,
+          "duration_s": 0.45,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 69,
+            "duration_frames": 14,
+            "out_frame": 82
+          }
+        },
+        {
+          "layer": "reply_keyboard",
+          "effect": "tap",
+          "start_s": 2.55,
+          "duration_s": 0.35,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": 0.06,
+          "ae": {
+            "in_frame": 76,
+            "duration_frames": 10,
+            "out_frame": 87
+          }
+        }
+      ],
+      "ae_text_layers": [
+        {
+          "role": "заголовок",
+          "text": "Приветствие",
+          "font_size_px": 64,
+          "color": "#16202E"
+        },
+        {
+          "role": "описание",
+          "text": "Первое сообщение бота после /start: коротко о том, что он умеет, и кнопка «Старт». Появление сообщения повторяет настоящий Telegram — сначала «печатает…», затем пузырь текста и клавиатура.",
+          "font_size_px": 34,
+          "color": "#4A5568"
+        }
+      ]
+    },
+    {
+      "key": "03_picking_genres",
+      "title": "Экран 3. Выбор интересов",
+      "heading": "Выбор жанра",
+      "description": "Бот предлагает жанры; отметка ✔ появляется сразу после нажатия, а текст сообщения и строка «Выбрано: …» обновляются. В конце — кнопка «Показать подборку».",
+      "screen_note": "Жанры отмечаются галочкой; можно ничего не выбирать — тогда возьмутся интересы из анкеты.",
+      "canvas": {
+        "width": 1080,
+        "height": 1350
+      },
+      "card": {
+        "width": 596,
+        "height": 1242,
+        "x": 242,
+        "y": 54
+      },
+      "scale": 1.588,
+      "duration_seconds": 7.5,
+      "gif_fps": 15,
+      "ae_fps": 30,
+      "gif_file": "cards/03_picking_genres.gif",
+      "gif_bytes": 924155,
+      "frames_exported": 0,
+      "layers": [
+        {
+          "name": "shadow",
+          "file": "layers/03_picking_genres/00_shadow.png",
+          "x": 185,
+          "y": -3,
+          "width": 710,
+          "height": 1356,
+          "z": 0
+        },
+        {
+          "name": "backdrop",
+          "file": "layers/03_picking_genres/01_backdrop.png",
+          "x": 242,
+          "y": 54,
+          "width": 596,
+          "height": 1242,
+          "z": 1
+        },
+        {
+          "name": "header",
+          "file": "layers/03_picking_genres/02_header.png",
+          "x": 242,
+          "y": 54,
+          "width": 596,
+          "height": 118,
+          "z": 2
+        },
+        {
+          "name": "typing_0",
+          "file": "layers/03_picking_genres/03_typing_0.png",
+          "x": 261,
+          "y": 712,
+          "width": 98,
+          "height": 57,
+          "z": 3
+        },
+        {
+          "name": "typing_1",
+          "file": "layers/03_picking_genres/04_typing_1.png",
+          "x": 261,
+          "y": 712,
+          "width": 98,
+          "height": 57,
+          "z": 4
+        },
+        {
+          "name": "typing_2",
+          "file": "layers/03_picking_genres/05_typing_2.png",
+          "x": 261,
+          "y": 712,
+          "width": 98,
+          "height": 57,
+          "z": 5
+        },
+        {
+          "name": "bubble",
+          "file": "layers/03_picking_genres/06_bubble.png",
+          "x": 261,
+          "y": 197,
+          "width": 557,
+          "height": 591,
+          "z": 6
+        },
+        {
+          "name": "inline_1",
+          "file": "layers/03_picking_genres/07_inline_1.png",
+          "x": 261,
+          "y": 807,
+          "width": 557,
+          "height": 54,
+          "z": 7
+        },
+        {
+          "name": "inline_2",
+          "file": "layers/03_picking_genres/08_inline_2.png",
+          "x": 261,
+          "y": 874,
+          "width": 557,
+          "height": 54,
+          "z": 8
+        },
+        {
+          "name": "inline_3",
+          "file": "layers/03_picking_genres/09_inline_3.png",
+          "x": 261,
+          "y": 940,
+          "width": 557,
+          "height": 54,
+          "z": 9
+        },
+        {
+          "name": "inline_4",
+          "file": "layers/03_picking_genres/10_inline_4.png",
+          "x": 261,
+          "y": 1007,
+          "width": 557,
+          "height": 54,
+          "z": 10
+        },
+        {
+          "name": "inline_5",
+          "file": "layers/03_picking_genres/11_inline_5.png",
+          "x": 261,
+          "y": 1074,
+          "width": 557,
+          "height": 54,
+          "z": 11
+        },
+        {
+          "name": "inline_6",
+          "file": "layers/03_picking_genres/12_inline_6.png",
+          "x": 261,
+          "y": 1140,
+          "width": 557,
+          "height": 54,
+          "z": 12
+        },
+        {
+          "name": "bubble_one",
+          "file": "layers/03_picking_genres/13_bubble_one.png",
+          "x": 261,
+          "y": 197,
+          "width": 557,
+          "height": 619,
+          "z": 13
+        },
+        {
+          "name": "rows_one",
+          "file": "layers/03_picking_genres/14_rows_one.png",
+          "x": 261,
+          "y": 807,
+          "width": 557,
+          "height": 400,
+          "z": 14
+        },
+        {
+          "name": "bubble_two",
+          "file": "layers/03_picking_genres/15_bubble_two.png",
+          "x": 261,
+          "y": 197,
+          "width": 557,
+          "height": 619,
+          "z": 15
+        },
+        {
+          "name": "rows_two",
+          "file": "layers/03_picking_genres/16_rows_two.png",
+          "x": 261,
+          "y": 835,
+          "width": 557,
+          "height": 400,
+          "z": 16
+        },
+        {
+          "name": "caption",
+          "file": "layers/03_picking_genres/17_caption.png",
+          "x": 242,
+          "y": 1248,
+          "width": 596,
+          "height": 29,
+          "z": 17
+        }
+      ],
+      "steps": [
+        {
+          "layer": "backdrop",
+          "effect": "fade",
+          "start_s": 0.0,
+          "duration_s": 0.35,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 0,
+            "duration_frames": 10,
+            "out_frame": 10
+          }
+        },
+        {
+          "layer": "shadow",
+          "effect": "fade",
+          "start_s": 0.0,
+          "duration_s": 0.35,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 0,
+            "duration_frames": 10,
+            "out_frame": 10
+          }
+        },
+        {
+          "layer": "header",
+          "effect": "slide_up",
+          "start_s": 0.05,
+          "duration_s": 0.45,
+          "ease": "ease_out",
+          "offset_px": 10,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 2,
+            "duration_frames": 14,
+            "out_frame": 15
+          }
+        },
+        {
+          "layer": "typing_0",
+          "effect": "pop",
+          "start_s": 0.45,
+          "duration_s": 0.22,
+          "ease": "back_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 14,
+            "duration_frames": 7,
+            "out_frame": 20
+          }
+        },
+        {
+          "layer": "typing_0",
+          "effect": "hide",
+          "start_s": 0.62,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 19,
+            "duration_frames": 1,
+            "out_frame": 19
+          }
+        },
+        {
+          "layer": "typing_1",
+          "effect": "pop",
+          "start_s": 0.62,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 19,
+            "duration_frames": 1,
+            "out_frame": 19
+          }
+        },
+        {
+          "layer": "typing_2",
+          "effect": "hide",
+          "start_s": 0.75,
+          "duration_s": 0.18,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 22,
+            "duration_frames": 5,
+            "out_frame": 28
+          }
+        },
+        {
+          "layer": "typing_1",
+          "effect": "hide",
+          "start_s": 0.79,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 24,
+            "duration_frames": 1,
+            "out_frame": 24
+          }
+        },
+        {
+          "layer": "typing_2",
+          "effect": "pop",
+          "start_s": 0.79,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 24,
+            "duration_frames": 1,
+            "out_frame": 24
+          }
+        },
+        {
+          "layer": "bubble",
+          "effect": "slide_up",
+          "start_s": 1.0,
+          "duration_s": 0.55,
+          "ease": "ease_out",
+          "offset_px": 26,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 30,
+            "duration_frames": 16,
+            "out_frame": 46
+          }
+        },
+        {
+          "layer": "inline_1",
+          "effect": "slide_up",
+          "start_s": 1.65,
+          "duration_s": 0.38,
+          "ease": "ease_out",
+          "offset_px": 14,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 50,
+            "duration_frames": 11,
+            "out_frame": 61
+          }
+        },
+        {
+          "layer": "inline_2",
+          "effect": "slide_up",
+          "start_s": 1.76,
+          "duration_s": 0.38,
+          "ease": "ease_out",
+          "offset_px": 14,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 53,
+            "duration_frames": 11,
+            "out_frame": 64
+          }
+        },
+        {
+          "layer": "inline_3",
+          "effect": "slide_up",
+          "start_s": 1.87,
+          "duration_s": 0.38,
+          "ease": "ease_out",
+          "offset_px": 14,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 56,
+            "duration_frames": 11,
+            "out_frame": 68
+          }
+        },
+        {
+          "layer": "inline_4",
+          "effect": "slide_up",
+          "start_s": 1.98,
+          "duration_s": 0.38,
+          "ease": "ease_out",
+          "offset_px": 14,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 59,
+            "duration_frames": 11,
+            "out_frame": 71
+          }
+        },
+        {
+          "layer": "inline_5",
+          "effect": "slide_up",
+          "start_s": 2.09,
+          "duration_s": 0.38,
+          "ease": "ease_out",
+          "offset_px": 14,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 63,
+            "duration_frames": 11,
+            "out_frame": 74
+          }
+        },
+        {
+          "layer": "inline_6",
+          "effect": "slide_up",
+          "start_s": 2.2,
+          "duration_s": 0.38,
+          "ease": "ease_out",
+          "offset_px": 14,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 66,
+            "duration_frames": 11,
+            "out_frame": 77
+          }
+        },
+        {
+          "layer": "inline_1",
+          "effect": "tap",
+          "start_s": 3.3,
+          "duration_s": 0.3,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": 0.06,
+          "ae": {
+            "in_frame": 99,
+            "duration_frames": 9,
+            "out_frame": 108
+          }
+        },
+        {
+          "layer": "bubble",
+          "effect": "hide",
+          "start_s": 3.42,
+          "duration_s": 0.1,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 103,
+            "duration_frames": 3,
+            "out_frame": 106
+          }
+        },
+        {
+          "layer": "bubble_one",
+          "effect": "fade",
+          "start_s": 3.42,
+          "duration_s": 0.18,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 103,
+            "duration_frames": 5,
+            "out_frame": 108
+          }
+        },
+        {
+          "layer": "inline_1",
+          "effect": "hide",
+          "start_s": 3.42,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 103,
+            "duration_frames": 1,
+            "out_frame": 103
+          }
+        },
+        {
+          "layer": "inline_2",
+          "effect": "hide",
+          "start_s": 3.42,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 103,
+            "duration_frames": 1,
+            "out_frame": 103
+          }
+        },
+        {
+          "layer": "inline_3",
+          "effect": "hide",
+          "start_s": 3.42,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 103,
+            "duration_frames": 1,
+            "out_frame": 103
+          }
+        },
+        {
+          "layer": "inline_4",
+          "effect": "hide",
+          "start_s": 3.42,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 103,
+            "duration_frames": 1,
+            "out_frame": 103
+          }
+        },
+        {
+          "layer": "inline_5",
+          "effect": "hide",
+          "start_s": 3.42,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 103,
+            "duration_frames": 1,
+            "out_frame": 103
+          }
+        },
+        {
+          "layer": "inline_6",
+          "effect": "hide",
+          "start_s": 3.42,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 103,
+            "duration_frames": 1,
+            "out_frame": 103
+          }
+        },
+        {
+          "layer": "rows_one",
+          "effect": "pop",
+          "start_s": 3.42,
+          "duration_s": 0.24,
+          "ease": "back_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 103,
+            "duration_frames": 7,
+            "out_frame": 110
+          }
+        },
+        {
+          "layer": "rows_one",
+          "effect": "shift_down",
+          "start_s": 3.5,
+          "duration_s": 0.3,
+          "ease": "ease_out",
+          "offset_px": 18,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 105,
+            "duration_frames": 9,
+            "out_frame": 114
+          }
+        },
+        {
+          "layer": "rows_one",
+          "effect": "tap",
+          "start_s": 4.3,
+          "duration_s": 0.3,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": 0.06,
+          "ae": {
+            "in_frame": 129,
+            "duration_frames": 9,
+            "out_frame": 138
+          }
+        },
+        {
+          "layer": "bubble_one",
+          "effect": "hide",
+          "start_s": 4.42,
+          "duration_s": 0.1,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 133,
+            "duration_frames": 3,
+            "out_frame": 136
+          }
+        },
+        {
+          "layer": "bubble_two",
+          "effect": "fade",
+          "start_s": 4.42,
+          "duration_s": 0.18,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 133,
+            "duration_frames": 5,
+            "out_frame": 138
+          }
+        },
+        {
+          "layer": "rows_one",
+          "effect": "hide",
+          "start_s": 4.42,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 133,
+            "duration_frames": 1,
+            "out_frame": 133
+          }
+        },
+        {
+          "layer": "rows_two",
+          "effect": "pop",
+          "start_s": 4.42,
+          "duration_s": 0.24,
+          "ease": "back_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 133,
+            "duration_frames": 7,
+            "out_frame": 140
+          }
+        },
+        {
+          "layer": "caption",
+          "effect": "fade",
+          "start_s": 5.15,
+          "duration_s": 0.45,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 154,
+            "duration_frames": 14,
+            "out_frame": 168
+          }
+        }
+      ],
+      "ae_text_layers": [
+        {
+          "role": "заголовок",
+          "text": "Выбор жанра",
+          "font_size_px": 64,
+          "color": "#16202E"
+        },
+        {
+          "role": "описание",
+          "text": "Бот предлагает жанры; отметка ✔ появляется сразу после нажатия, а текст сообщения и строка «Выбрано: …» обновляются. В конце — кнопка «Показать подборку».",
+          "font_size_px": 34,
+          "color": "#4A5568"
+        }
+      ]
+    },
+    {
+      "key": "04_game_list",
+      "title": "Экран 4. Подборка игр",
+      "heading": "Выбор игры",
+      "description": "Подборка игр по анкете: фильтры, номер страницы и игры, в которые пользователь ещё не играл. Нажатие на строку ведёт в карточку игры с обложкой из RAWG.",
+      "screen_note": "Сыгранные игры исключены из подборки автоматически.",
+      "canvas": {
+        "width": 1080,
+        "height": 1350
+      },
+      "card": {
+        "width": 623,
+        "height": 1242,
+        "x": 228,
+        "y": 54
+      },
+      "scale": 1.66,
+      "duration_seconds": 7.5,
+      "gif_fps": 15,
+      "ae_fps": 30,
+      "gif_file": "cards/04_game_list.gif",
+      "gif_bytes": 749490,
+      "frames_exported": 0,
+      "layers": [
+        {
+          "name": "shadow",
+          "file": "layers/04_game_list/00_shadow.png",
+          "x": 168,
+          "y": -6,
+          "width": 743,
+          "height": 1362,
+          "z": 0
+        },
+        {
+          "name": "backdrop",
+          "file": "layers/04_game_list/01_backdrop.png",
+          "x": 228,
+          "y": 54,
+          "width": 623,
+          "height": 1242,
+          "z": 1
+        },
+        {
+          "name": "header",
+          "file": "layers/04_game_list/02_header.png",
+          "x": 228,
+          "y": 54,
+          "width": 623,
+          "height": 123,
+          "z": 2
+        },
+        {
+          "name": "typing_0",
+          "file": "layers/04_game_list/03_typing_0.png",
+          "x": 248,
+          "y": 715,
+          "width": 103,
+          "height": 60,
+          "z": 3
+        },
+        {
+          "name": "typing_1",
+          "file": "layers/04_game_list/04_typing_1.png",
+          "x": 248,
+          "y": 715,
+          "width": 103,
+          "height": 60,
+          "z": 4
+        },
+        {
+          "name": "typing_2",
+          "file": "layers/04_game_list/05_typing_2.png",
+          "x": 248,
+          "y": 715,
+          "width": 103,
+          "height": 60,
+          "z": 5
+        },
+        {
+          "name": "bubble",
+          "file": "layers/04_game_list/06_bubble.png",
+          "x": 248,
+          "y": 203,
+          "width": 583,
+          "height": 591,
+          "z": 6
+        },
+        {
+          "name": "inline_1",
+          "file": "layers/04_game_list/07_inline_1.png",
+          "x": 248,
+          "y": 814,
+          "width": 583,
+          "height": 56,
+          "z": 7
+        },
+        {
+          "name": "inline_2",
+          "file": "layers/04_game_list/08_inline_2.png",
+          "x": 248,
+          "y": 884,
+          "width": 583,
+          "height": 56,
+          "z": 8
+        },
+        {
+          "name": "inline_3",
+          "file": "layers/04_game_list/09_inline_3.png",
+          "x": 248,
+          "y": 954,
+          "width": 583,
+          "height": 56,
+          "z": 9
+        },
+        {
+          "name": "inline_4",
+          "file": "layers/04_game_list/10_inline_4.png",
+          "x": 248,
+          "y": 1024,
+          "width": 583,
+          "height": 56,
+          "z": 10
+        },
+        {
+          "name": "inline_5",
+          "file": "layers/04_game_list/11_inline_5.png",
+          "x": 248,
+          "y": 1093,
+          "width": 583,
+          "height": 56,
+          "z": 11
+        },
+        {
+          "name": "inline_6",
+          "file": "layers/04_game_list/12_inline_6.png",
+          "x": 248,
+          "y": 1163,
+          "width": 583,
+          "height": 56,
+          "z": 12
+        },
+        {
+          "name": "caption",
+          "file": "layers/04_game_list/13_caption.png",
+          "x": 228,
+          "y": 1246,
+          "width": 623,
+          "height": 30,
+          "z": 13
+        }
+      ],
+      "steps": [
+        {
+          "layer": "backdrop",
+          "effect": "fade",
+          "start_s": 0.0,
+          "duration_s": 0.35,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 0,
+            "duration_frames": 10,
+            "out_frame": 10
+          }
+        },
+        {
+          "layer": "shadow",
+          "effect": "fade",
+          "start_s": 0.0,
+          "duration_s": 0.35,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 0,
+            "duration_frames": 10,
+            "out_frame": 10
+          }
+        },
+        {
+          "layer": "header",
+          "effect": "slide_up",
+          "start_s": 0.05,
+          "duration_s": 0.45,
+          "ease": "ease_out",
+          "offset_px": 10,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 2,
+            "duration_frames": 14,
+            "out_frame": 15
+          }
+        },
+        {
+          "layer": "typing_0",
+          "effect": "pop",
+          "start_s": 0.45,
+          "duration_s": 0.22,
+          "ease": "back_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 14,
+            "duration_frames": 7,
+            "out_frame": 20
+          }
+        },
+        {
+          "layer": "typing_0",
+          "effect": "hide",
+          "start_s": 0.62,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 19,
+            "duration_frames": 1,
+            "out_frame": 19
+          }
+        },
+        {
+          "layer": "typing_1",
+          "effect": "pop",
+          "start_s": 0.62,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 19,
+            "duration_frames": 1,
+            "out_frame": 19
+          }
+        },
+        {
+          "layer": "typing_2",
+          "effect": "hide",
+          "start_s": 0.75,
+          "duration_s": 0.18,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 22,
+            "duration_frames": 5,
+            "out_frame": 28
+          }
+        },
+        {
+          "layer": "typing_1",
+          "effect": "hide",
+          "start_s": 0.79,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 24,
+            "duration_frames": 1,
+            "out_frame": 24
+          }
+        },
+        {
+          "layer": "typing_2",
+          "effect": "pop",
+          "start_s": 0.79,
+          "duration_s": 0.01,
+          "ease": "linear",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 24,
+            "duration_frames": 1,
+            "out_frame": 24
+          }
+        },
+        {
+          "layer": "bubble",
+          "effect": "slide_up",
+          "start_s": 1.0,
+          "duration_s": 0.55,
+          "ease": "ease_out",
+          "offset_px": 26,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 30,
+            "duration_frames": 16,
+            "out_frame": 46
+          }
+        },
+        {
+          "layer": "inline_1",
+          "effect": "slide_up",
+          "start_s": 1.7,
+          "duration_s": 0.4,
+          "ease": "ease_out",
+          "offset_px": 16,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 51,
+            "duration_frames": 12,
+            "out_frame": 63
+          }
+        },
+        {
+          "layer": "inline_2",
+          "effect": "slide_up",
+          "start_s": 1.83,
+          "duration_s": 0.4,
+          "ease": "ease_out",
+          "offset_px": 16,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 55,
+            "duration_frames": 12,
+            "out_frame": 67
+          }
+        },
+        {
+          "layer": "inline_3",
+          "effect": "slide_up",
+          "start_s": 1.96,
+          "duration_s": 0.4,
+          "ease": "ease_out",
+          "offset_px": 16,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 59,
+            "duration_frames": 12,
+            "out_frame": 71
+          }
+        },
+        {
+          "layer": "inline_4",
+          "effect": "slide_up",
+          "start_s": 2.09,
+          "duration_s": 0.4,
+          "ease": "ease_out",
+          "offset_px": 16,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 63,
+            "duration_frames": 12,
+            "out_frame": 75
+          }
+        },
+        {
+          "layer": "inline_5",
+          "effect": "slide_up",
+          "start_s": 2.22,
+          "duration_s": 0.4,
+          "ease": "ease_out",
+          "offset_px": 16,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 67,
+            "duration_frames": 12,
+            "out_frame": 79
+          }
+        },
+        {
+          "layer": "inline_6",
+          "effect": "slide_up",
+          "start_s": 2.35,
+          "duration_s": 0.4,
+          "ease": "ease_out",
+          "offset_px": 16,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 70,
+            "duration_frames": 12,
+            "out_frame": 82
+          }
+        },
+        {
+          "layer": "inline_1",
+          "effect": "tap",
+          "start_s": 4.6,
+          "duration_s": 0.34,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": 0.06,
+          "ae": {
+            "in_frame": 138,
+            "duration_frames": 10,
+            "out_frame": 148
+          }
+        },
+        {
+          "layer": "caption",
+          "effect": "fade",
+          "start_s": 5.2,
+          "duration_s": 0.45,
+          "ease": "ease_out",
+          "offset_px": 0.0,
+          "amplitude": null,
+          "ae": {
+            "in_frame": 156,
+            "duration_frames": 14,
+            "out_frame": 170
+          }
+        }
+      ],
+      "ae_text_layers": [
+        {
+          "role": "заголовок",
+          "text": "Выбор игры",
+          "font_size_px": 64,
+          "color": "#16202E"
+        },
+        {
+          "role": "описание",
+          "text": "Подборка игр по анкете: фильтры, номер страницы и игры, в которые пользователь ещё не играл. Нажатие на строку ведёт в карточку игры с обложкой из RAWG.",
+          "font_size_px": 34,
+          "color": "#4A5568"
+        }
+      ]
+    }
+  ]
+}

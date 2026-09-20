@@ -454,6 +454,7 @@ python -m pytest --collect-only -q | tail -1
 | `make run` | запустить Telegram-бота |
 | `make test` | запустить тесты |
 | `make mockups` | перегенерировать SVG-мокапы 17 экранов |
+| `make ae-assets` | собрать анимированные карточки и слои для After Effects (`docs/ae`) |
 | `make lint` | проверить синтаксис всех файлов проекта |
 | `make clean` | удалить кэш Python и локальную базу SQLite |
 
@@ -472,6 +473,7 @@ python -m pytest --collect-only -q | tail -1
 | [07_ustanovka_i_zapusk.md](docs/07_ustanovka_i_zapusk.md) | пошаговая установка, запуск, проверка в Telegram, возможные проблемы |
 | [08_plan_proekta.md](docs/08_plan_proekta.md) | план по этапам, чек-лист ручного тестирования, работа с Git, риски |
 | [09_testirovanie.md](docs/09_testirovanie.md) | состав тестов, что проверяется по слоям, пример сквозного теста |
+| [10_ae_animaciya_kartochek.md](docs/10_ae_animaciya_kartochek.md) | анимированные карточки для After Effects: раскадровка, слои, экспорт GIF |
 
 Диаграммы DrawIO (открываются на [app.diagrams.net](https://app.diagrams.net)):
 
@@ -493,6 +495,17 @@ make mockups        # пересобрать мокапы после измен�
 
 Тест `tests/test_mockups.py::TestRepoMockups::test_content_is_up_to_date`
 проверяет, что мокапы в репозитории не устарели.
+
+Анимированные карточки для Adobe After Effects — [docs/ae/](docs/ae/): три
+карточки (приветствие, выбор жанра, выбор игры) в виде готовых GIF, слоёв PNG с
+прозрачностью, раскадровки `timeline.json` (секунды и кадры AE) и скрипта
+`import_layers.jsx`. Инструкция по сборке композиции и экспорту GIF —
+[docs/10_ae_animaciya_kartochek.md](docs/10_ae_animaciya_kartochek.md), живое
+превью «карточка сверху + текст снизу» — `docs/ae/preview.html`.
+
+```bash
+make ae-assets      # пересобрать карточки, слои и раскадровку (нужен Pillow)
+```
 
 ---
 

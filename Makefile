@@ -4,7 +4,7 @@
 PYTHON ?= python3
 PIP    ?= $(PYTHON) -m pip
 
-.PHONY: help install install-dev init-db demo run test mockups lint clean
+.PHONY: help install install-dev init-db demo run test mockups ae-assets lint clean
 
 help:
 	@echo "Доступные команды:"
@@ -15,6 +15,7 @@ help:
 	@echo "  make run          - запустить Telegram-бота"
 	@echo "  make test         - запустить тесты"
 	@echo "  make mockups      - перегенерировать SVG-мокапы экранов"
+	@echo "  make ae-assets    - собрать карточки и слои для After Effects (docs/ae)"
 	@echo "  make lint         - проверить синтаксис всех файлов проекта"
 	@echo "  make clean        - удалить кэш Python и локальную базу SQLite"
 
@@ -38,6 +39,9 @@ test:
 
 mockups:
 	$(PYTHON) -m scripts.generate_mockups
+
+ae-assets:
+	$(PYTHON) scripts/generate_ae_assets.py
 
 lint:
 	$(PYTHON) -m compileall -q gamehunter tests scripts run.py
