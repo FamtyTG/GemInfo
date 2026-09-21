@@ -49,8 +49,7 @@ class GenrePickingScreen(BaseScreen):
 
         context = self.context(user_id).at_picking(genre_catalog=genres)
         self.save(user_id, context)
-        self._render(chat_id, context)
-        tutorial.send_tutorial(self._gateway, chat_id, "picking")
+        self._render(chat_id, context, with_tutorial=True)
 
     def toggle(self, chat_id: int, user_id: int, slug: str) -> None:
         """Отмечает или снимает жанр и обновляет экран."""
@@ -82,18 +81,20 @@ class GenrePickingScreen(BaseScreen):
         self._game_list.show(chat_id, user_id, page=1, ignore_profile_genres=True)
 
     # ------------------------------------------------------------------ #
-    def _render(self, chat_id: int, context: UserContext, note: str = "") -> None:
+    def _render(self, chat_id: int, context: UserContext, note: str = "",
+                with_tutorial: bool = False) -> None:
         genres = context.genre_catalog
         message = texts.format_genres_selection(
             genres, context.picked_genres, texts.GENRES_TITLE, texts.GENRES_FOOTER
         )
         if note:
             message = f"{note}\n\n{message}"
-        self.send(
-            chat_id,
-            message,
-            reply_markup=keyboards.picking_genres_keyboard(genres, context.picked_genres),
-        )
+        markup = keyboards.picking_genres_keyboard(genres, context.picked_genres)
+        if with_tutorial and tutorial.send_tutorial(
+            self._gateway, chat_id, "picking", message, markup
+        ):
+            return
+        self.send(chat_id, message, reply_markup=markup)
 
     def _profile_of(self, user_id: int) -> UserProfile:
         """Анкета пользователя (пустая, если базу прочитать не удалось)."""
@@ -179,23 +180,23 @@ class GameListScreen(BaseScreen):
             ),
         )
 
-        self.send(
-            chat_id,
-            texts.format_games(
-                game_page,
-                filters_line,
-                played_excluded=bool(played_ids),
-                title=title,
-            ),
-            reply_markup=keyboards.games_keyboard(
-                game_page.games,
-                game_page.page,
-                has_next=game_page.has_next,
-                has_previous=game_page.has_previous,
-                rating_active=context.age_rating is not None,
-            ),
+        message = texts.format_games(
+            game_page,
+            filters_line,
+            played_excluded=bool(played_ids),
+            title=title,
         )
-        tutorial.send_tutorial(self._gateway, chat_id, "game_list")
+        markup = keyboards.games_keyboard(
+            game_page.games,
+            game_page.page,
+            has_next=game_page.has_next,
+            has_previous=game_page.has_previous,
+            rating_active=context.age_rating is not None,
+        )
+        if not tutorial.send_tutorial(
+            self._gateway, chat_id, "game_list", message, markup
+        ):
+            self.send(chat_id, message, reply_markup=markup)
 
     def rerender(self, chat_id: int, user_id: int) -> None:
         """Показывает сохранённый список игр (кнопка «Назад» из карточки игры)."""

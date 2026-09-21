@@ -43,11 +43,17 @@ def animation_path(card_key: str) -> Path:
     return ASSETS_DIR / f"{card_key}.mp4"
 
 
-def send_tutorial(gateway: TelegramGateway, chat_id: int, screen_key: str) -> bool:
-    """Отправляет обучающий ролик экрана; при любой ошибке просто логирует.
+def send_tutorial(gateway: TelegramGateway, chat_id: int, screen_key: str,
+                  caption: str, reply_markup=None) -> bool:
+    """Отправляет обучающий ролик ВМЕСТЕ с сообщением экрана.
 
-    Обучение не должно мешать основному сценарию: если файла нет или
-    Telegram отклонил анимацию — пользователь всё равно увидит свой экран.
+    Ролик приходит одним сообщением: сверху видео, снизу — подпись с текстом
+    экрана (`caption`) и привычной клавиатурой (`reply_markup`). Никаких
+    «Карточка 1 из 3» и отдельных сообщений: пользователь видит свой экран,
+    просто дополненный видеоинструкцией.
+
+    Обучение не должно мешать основному сценарию: если файла нет или Telegram
+    отклонил анимацию — возвращаем False, и экран отправится обычным текстом.
     """
     card_key = CARD_BY_SCREEN.get(screen_key, screen_key)
     path = animation_path(card_key)
@@ -55,13 +61,8 @@ def send_tutorial(gateway: TelegramGateway, chat_id: int, screen_key: str) -> bo
         logger.error("Файл обучения отсутствует: %s", path)
         return False
 
-    number = texts.TUTORIAL_CARD_NUMBERS.get(card_key, 0)
-    caption = (
-        f"🎬 Карточка {number} из {len(TUTORIAL_CARDS)}\n"
-        f"{texts.tutorial_caption(card_key)}"
-    )
     logger.info("Отправляю обучающий ролик %s в чат %s", card_key, chat_id)
-    if not gateway.send_animation(chat_id, path, caption):
+    if not gateway.send_animation(chat_id, path, caption, reply_markup):
         logger.warning("Не удалось отправить обучающий ролик %s в чат %s", card_key, chat_id)
         return False
     return True

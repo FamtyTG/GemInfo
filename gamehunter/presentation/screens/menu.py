@@ -18,8 +18,11 @@ class StartScreen(BaseScreen):
 
     def show(self, chat_id: int) -> None:
         logger.debug("Экран 1 «Старт» для чата %s", chat_id)
-        self.send(chat_id, texts.START_WELCOME, reply_markup=keyboards.start_keyboard())
-        tutorial.send_tutorial(self._gateway, chat_id, "start")
+        markup = keyboards.start_keyboard()
+        if not tutorial.send_tutorial(
+            self._gateway, chat_id, "start", texts.START_WELCOME, markup
+        ):
+            self.send(chat_id, texts.START_WELCOME, reply_markup=markup)
 
 
 class MainMenuScreen(BaseScreen):

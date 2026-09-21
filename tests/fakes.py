@@ -411,14 +411,17 @@ class FakeGateway:
         self.events.append(message)
         return True
 
-    def send_animation(self, chat_id: int, animation: Path, caption: str = "") -> bool:
-        """Анимации пишем отдельно от текстовых событий: они не должны
-        сбивать проверки «последнее сообщение экрана»."""
+    def send_animation(self, chat_id: int, animation: Path, caption: str = "",
+                       reply_markup=None) -> bool:
+        """Ролик с подписью и клавиатурой — обычное событие чата (как в боте)."""
         if self.animation_fails:
             return False
-        self.animations.append(
-            SentMessage(chat_id=chat_id, text=caption, animation=Path(animation))
+        message = SentMessage(
+            chat_id=chat_id, text=caption, markup=reply_markup,
+            animation=Path(animation),
         )
+        self.animations.append(message)
+        self.events.append(message)
         return True
 
     def answer_callback(self, call, text: str = "") -> None:

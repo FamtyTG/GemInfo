@@ -60,14 +60,25 @@ class TelegramGateway:
         return False
 
     # ------------------------------------------------------------------ #
+    #: лимит Telegram для подписи к анимации (у обычного текста — 4096)
+    ANIMATION_CAPTION_LIMIT = 1024
+
     def send_animation(
-        self, chat_id: int, animation: Path, caption: str = ""
+        self, chat_id: int, animation: Path, caption: str = "", reply_markup=None
     ) -> bool:
-        """Отправляет GIF-анимацию файлом. Возвращает False, если не получилось."""
+        """Отправляет видеофайл с подписью и клавиатурой одним сообщением.
+
+        Ролик показывается сверху, подпись (текст экрана) — под ним, поэтому
+        обучающая карточка и сообщение экрана — это одно сообщение Telegram.
+        Возвращает False, если не получилось.
+        """
         try:
             with open(animation, "rb") as handle:
                 self._bot.send_animation(
-                    chat_id, handle, caption=self._truncate(caption) or None
+                    chat_id,
+                    handle,
+                    caption=self._truncate(caption, self.ANIMATION_CAPTION_LIMIT) or None,
+                    reply_markup=reply_markup,
                 )
             return True
         except FileNotFoundError:
