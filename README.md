@@ -25,6 +25,8 @@ GameHunter помогает ответить на вопрос «во что б�
 | 7 | Оставить отзыв о сыгранной игре (до 1000 символов) | Экран 11а |
 | 8 | Просмотреть список «Во что я играл» с пагинацией | Экран 10 |
 | 9 | Сохранять игры в избранное и просматривать его | Экран 12 |
+| 10 | Посмотреть обучающие видеокарточки (GIF) о том, как пользоваться ботом | Экран 13 |
+| 11 | Подобрать игры по возрастному рейтингу (3+…18+) независимо от анкеты | Экран 14 |
 
 Как это работает:
 
@@ -34,7 +36,12 @@ GameHunter помогает ответить на вопрос «во что б�
   по умолчанию: бот не предлагает игры «18+» подростку и не показывает игры для
   консоли, которой у пользователя нет.
 * **Возрастной рейтинг** — ESRB и PEGI переводятся в минимальный возраст
-  (`AgePolicy`): EC → 3, E → 6, E10+ → 10, T → 13, M → 17, AO → 18.
+  (`AgePolicy`): EC → 3, E → 6, E10+ → 10, T → 13, M → 17, AO → 18. На
+  Экране 14 можно выбрать категорию рейтинга для подборки — она важнее
+  возраста из анкеты (сброс возвращает фильтр по анкете).
+* **Обучение** — Экран 13 отправляет три анимированные карточки-инструкции
+  16:9 (60 fps): слева работает «телефон» с настоящим интерфейсом бота,
+  справа — шаги обучения, нажатия подсвечены кольцом.
 * **Франшиза (IP)** — поиск по вселенной: `GET /franchises?search=Marvel`, затем
   список игр выбранной франшизы.
 * **Регион по IP** — Telegram Bot API не передаёт IP пользователя, поэтому бот
@@ -168,13 +175,14 @@ PROXY_URL=socks5://127.0.0.1:1080
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ PRESENTATION — что видит пользователь                                    │
-│   handlers.py   BotHandlers: /start, callback (28 маршрутов), текст,      │
+│   handlers.py   BotHandlers: /start, callback (34 маршрута), текст,      │
 │                 «мусор»; декоратор safe_handler (ошибка → user_message)   │
-│   screens/      17 экранов: menu, picking, franchise, profile, library    │
+│   screens/      19 экранов: menu, picking, franchise, profile, library,   │
+│                 tutorial, rating                                          │
 │   texts.py      все сообщения бота и форматирование                       │
 │   keyboards.py  reply/inline-клавиатуры и схема callback-данных           │
 │   state.py      ContextScreen, UserContext, StateStorage                  │
-│   gateway.py    TelegramGateway: текст, фото, ответ на callback           │
+│   gateway.py    TelegramGateway: текст, фото, анимации, ответ на callback │
 └───────────────────────────────────┬─────────────────────────────────────┘
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -234,16 +242,17 @@ GemInfo/
 │       ├── keyboards.py            # ButtonText, CallbackAction, клавиатуры
 │       ├── state.py                # ContextScreen, UserContext, StateStorage
 │       ├── texts.py                # тексты сообщений и форматирование
-│       └── screens/                # 17 экранов (base, menu, picking,
-│                                   #  franchise, profile, library)
+│       └── screens/                # 19 экранов (base, menu, picking,
+│                                   #  franchise, profile, library,
+│                                   #  tutorial, rating)
 ├── scripts/
 │   ├── init_db.py                  # создание таблиц и демо-данных
 │   └── generate_mockups.py         # генерация SVG-мокапов экранов
-├── tests/                          # 1409 тестов (pytest)
+├── tests/                          # 1501 тест (pytest)
 │   ├── conftest.py                 # фикстуры: SQLite, сервисы, экраны, бот
 │   ├── fakes.py                    # подставные провайдеры, шлюз, фабрики
-│   └── test_*.py                   # 20 модулей тестов
-├── docs/                           # 9 документов + диаграммы + мокапы
+│   └── test_*.py                   # 23 модуля тестов
+├── docs/                           # 11 документов + диаграммы + мокапы
 │   ├── 01_ideya_i_trebovaniya.md
 │   ├── 02_scenarii_ispolzovaniya.md
 │   ├── 03_baza_dannyh.md
@@ -253,8 +262,11 @@ GemInfo/
 │   ├── 07_ustanovka_i_zapusk.md
 │   ├── 08_plan_proekta.md
 │   ├── 09_testirovanie.md
+│   ├── 10_ae_animaciya_kartochek.md
+│   ├── 11_pamyatka_stop_i_start.md
+│   ├── ae/                         # слои PNG, timeline.json, preview.html
 │   ├── diagrams/                   # 4 диаграммы DrawIO
-│   └── mockups/                    # 17 SVG-мокапов экранов
+│   └── mockups/                    # 18 SVG-мокапов экранов
 ├── .env.example                    # шаблон настроек
 ├── docker-compose.yml              # PostgreSQL 16 + Adminer
 ├── Makefile
@@ -424,7 +436,7 @@ python -m pytest -q tests/test_bot_flow.py  # сквозные сценарии 
 python -m pytest --collect-only -q | tail -1
 ```
 
-**1409 тестов** в 20 модулях. Тесты не требуют интернета и PostgreSQL: внешние
+**1501 тест** в 23 модулях. Тесты не требуют интернета и PostgreSQL: внешние
 сервисы заменены подставными объектами из `tests/fakes.py`, база данных — SQLite
 во временной папке, Telegram — `FakeGateway`.
 
@@ -432,8 +444,8 @@ python -m pytest --collect-only -q | tail -1
 |--------|--------|-----------------|
 | Домен | `test_entities`, `test_age_ratings`, `test_exceptions`, `test_game_service`, `test_profile_service`, `test_library_service` | сущности, возрастные рейтинги ESRB/PEGI, тексты ошибок, подбор игр, анкета, библиотека |
 | Инфраструктура | `test_http_client`, `test_rawg_client`, `test_ip_location_client`, `test_repositories` | HTTP-ошибки, разбор ответов RAWG и сервисов геолокации, схема БД и репозитории |
-| Представление | `test_texts`, `test_keyboards`, `test_state`, `test_screens`, `test_handlers`, `test_app`, `test_mockups` | тексты и лимит 4096 символов, клавиатуры и callback-данные, состояние, все 17 экранов, обработчики, сборка приложения, мокапы |
-| Настройки и скрипты | `test_config`, `test_init_db` | `Settings.from_env`, создание таблиц и демо-данных, CLI |
+| Представление | `test_texts`, `test_keyboards`, `test_state`, `test_screens`, `test_handlers`, `test_app`, `test_mockups`, `test_tutorial`, `test_rating_screen` | тексты и лимит 4096 символов, клавиатуры и callback-данные, состояние, все 19 экранов, обработчики, сборка приложения, мокапы, обучение (GIF), возрастной рейтинг |
+| Настройки и скрипты | `test_config`, `test_init_db`, `test_ae_assets` | `Settings.from_env`, создание таблиц и демо-данных, CLI, генератор обучающих карточек |
 | Сквозные | `test_bot_flow` | 48 сценариев «от /start до результата», включая ошибки сервисов и базы |
 
 Проверка синтаксиса всех модулей: `make lint` (`python -m compileall`).
@@ -453,8 +465,8 @@ python -m pytest --collect-only -q | tail -1
 | `make demo` | создать таблицы и добавить демонстрационные данные |
 | `make run` | запустить Telegram-бота |
 | `make test` | запустить тесты |
-| `make mockups` | перегенерировать SVG-мокапы 17 экранов |
-| `make ae-assets` | собрать анимированные карточки и слои для After Effects (`docs/ae`) |
+| `make mockups` | перегенерировать SVG-мокапы 18 экранов |
+| `make ae-assets` | собрать обучающие GIF-карточки (`gamehunter/assets/tutorial`) и слои для After Effects (`docs/ae`) |
 | `make lint` | проверить синтаксис всех файлов проекта |
 | `make clean` | удалить кэш Python и локальную базу SQLite |
 
@@ -467,13 +479,13 @@ python -m pytest --collect-only -q | tail -1
 | [01_ideya_i_trebovaniya.md](docs/01_ideya_i_trebovaniya.md) | идея, возможности, технологические требования, безопасность секретов |
 | [02_scenarii_ispolzovaniya.md](docs/02_scenarii_ispolzovaniya.md) | акторы, Use Case диаграмма, 9 детализированных сценариев |
 | [03_baza_dannyh.md](docs/03_baza_dannyh.md) | три таблицы, SQL-схема, ER-диаграмма, ORM-модели, операции с данными |
-| [04_karta_ekranov.md](docs/04_karta_ekranov.md) | карта перемещения, 17 экранов, кнопки, особые случаи, сводка callback-данных |
+| [04_karta_ekranov.md](docs/04_karta_ekranov.md) | карта перемещения, 19 экранов, кнопки, особые случаи, сводка callback-данных |
 | [05_arhitektura.md](docs/05_arhitektura.md) | принципы, схема слоёв, состав модулей, поток данных, дерево проекта |
 | [06_vneshnie_api.md](docs/06_vneshnie_api.md) | RAWG и сервисы геолокации: запросы, примеры ответов, разбор полей, ошибки |
 | [07_ustanovka_i_zapusk.md](docs/07_ustanovka_i_zapusk.md) | пошаговая установка, запуск, проверка в Telegram, возможные проблемы |
 | [08_plan_proekta.md](docs/08_plan_proekta.md) | план по этапам, чек-лист ручного тестирования, работа с Git, риски |
 | [09_testirovanie.md](docs/09_testirovanie.md) | состав тестов, что проверяется по слоям, пример сквозного теста |
-| [10_ae_animaciya_kartochek.md](docs/10_ae_animaciya_kartochek.md) | анимированные карточки для After Effects: раскадровка, слои, экспорт GIF |
+| [10_ae_animaciya_kartochek.md](docs/10_ae_animaciya_kartochek.md) | обучающие видеокарточки: раскадровка 16:9/60 fps, слои, экспорт GIF, сборка в After Effects |
 | [11_pamyatka_stop_i_start.md](docs/11_pamyatka_stop_i_start.md) | памятка: как остановить и снова запустить бота, Docker и PostgreSQL на Windows |
 
 Диаграммы DrawIO (открываются на [app.diagrams.net](https://app.diagrams.net)):
@@ -485,7 +497,7 @@ python -m pytest --collect-only -q | tail -1
 | [docs/diagrams/screens_flow.drawio](docs/diagrams/screens_flow.drawio) | карта перемещения по экранам |
 | [docs/diagrams/architecture.drawio](docs/diagrams/architecture.drawio) | трёхслойная архитектура |
 
-Мокапы экранов — [docs/mockups/](docs/mockups/): 17 SVG-файлов, по одному на
+Мокапы экранов — [docs/mockups/](docs/mockups/): 18 SVG-файлов, по одному на
 экран. Они **генерируются из кода бота** (`scripts/generate_mockups.py` берёт
 тексты из `presentation/texts.py` и кнопки из `presentation/keyboards.py`),
 поэтому макеты всегда соответствуют реальному интерфейсу:
@@ -497,12 +509,15 @@ make mockups        # пересобрать мокапы после измен�
 Тест `tests/test_mockups.py::TestRepoMockups::test_content_is_up_to_date`
 проверяет, что мокапы в репозитории не устарели.
 
-Анимированные карточки для Adobe After Effects — [docs/ae/](docs/ae/): три
-карточки (приветствие, выбор жанра, выбор игры) в виде готовых GIF, слоёв PNG с
-прозрачностью, раскадровки `timeline.json` (секунды и кадры AE) и скрипта
+Обучающие видеокарточки — [gamehunter/assets/tutorial/](gamehunter/assets/tutorial/):
+три GIF-инструкции 16:9 (приветствие, выбор жанра, выбор игры), которые бот
+отправляет на Экране 13 «Обучение» (кнопка «🎬 Как пользоваться»). Ассеты для
+Adobe After Effects — [docs/ae/](docs/ae/): слои PNG с прозрачностью,
+раскадровка `timeline.json` (секунды и кадры AE при 60 fps) и скрипт
 `import_layers.jsx`. Инструкция по сборке композиции и экспорту GIF —
 [docs/10_ae_animaciya_kartochek.md](docs/10_ae_animaciya_kartochek.md), живое
-превью «карточка сверху + текст снизу» — `docs/ae/preview.html`.
+превью — `docs/ae/preview.html` (открывать через `python -m http.server` из
+корня репозитория).
 
 ```bash
 make ae-assets      # пересобрать карточки, слои и раскадровку (нужен Pillow)

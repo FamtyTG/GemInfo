@@ -1,16 +1,15 @@
-// GameHunter: импорт слоёв карточки и сборка композиции в After Effects.
+// GameHunter: импорт слоёв обучающей карточки в After Effects.
 //
 // Как пользоваться:
 //   1. File -> Scripts -> Run Script File... и выберите этот файл.
-//   2. В диалоге укажите папку docs/ae/layers/<экран> (например, 01_start).
-//   3. Скрипт создаст композицию 1080x1350, 30 fps, разложит слои по местам
-//      и проставит ключевые кадры Opacity/Position из timeline.json.
+//   2. Укажите папку docs/ae/layers/<экран> (например, 01_start).
+//   3. Скрипт создаст композицию 1920x1080, 60 fps, разложит слои и
+//      проставит ключевые кадры Opacity/Position из timeline.json.
 //
-// Скрипт вспомогательный: эффекты «pop» и «tap» (масштаб) доделайте вручную —
-// в AE это Scale с Easy Ease (F9) либо expression overshoot (см. документ
-// docs/10_ae_animaciya_kartochek.md).
+// Эффекты «pop», «tap» и «shift_down» доделайте вручную по раскадровке
+// (docs/10_ae_animaciya_kartochek.md): Scale с Easy Ease (F9).
 (function () {
-    var WIDTH = 1080, HEIGHT = 1350, FPS = 30;
+    var WIDTH = 1920, HEIGHT = 1080, FPS = 60;
 
     var layersFolder = Folder.selectDialog("Выберите папку слоёв (docs/ae/layers/<экран>)");
     if (!layersFolder) return;
@@ -80,7 +79,9 @@
                 if (step.effect === "slide_up") {
                     var pos = cl.property("Position");
                     var base = pos.value;
-                    pos.setValueAtTime(t0, [base[0], base[1] + step.offset_px * cardInfo.scale]);
+                    var factor = (cardInfo.layers && step.layer.indexOf("step_") === 0
+                        || step.layer === "panel_heading" || step.layer === "progress") ? 2 : cardInfo.scale;
+                    pos.setValueAtTime(t0, [base[0], base[1] + step.offset_px * factor]);
                     pos.setValueAtTime(t1, base);
                 }
             }

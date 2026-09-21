@@ -307,7 +307,7 @@ python -m pytest --collect-only -q | tail -1  # сколько тестов в �
 make mockups       # или: python -m scripts.generate_mockups
 ```
 
-SVG-мокапы всех 17 экранов появятся в `docs/mockups/`. Тексты и кнопки берутся
+SVG-мокапы всех 18 экранов появятся в `docs/mockups/`. Тексты и кнопки берутся
 из модулей `texts.py` и `keyboards.py`, поэтому мокапы всегда соответствуют коду.
 Если установлен `cairosvg`, дополнительно создаются PNG-версии.
 

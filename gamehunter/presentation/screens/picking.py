@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Optional, Sequence
 
+from gamehunter.domain import age_ratings
 from gamehunter.domain.entities import Game, GameDetails, UserProfile
 from gamehunter.domain.exceptions import (
     GameHunterError,
@@ -139,6 +140,14 @@ class GameListScreen(BaseScreen):
             # «Показать всё» — интересы из анкеты не применяем
             profile = profile.with_genres(())
 
+        if context.age_rating is not None:
+            # Экран 14: рейтинг важнее возраста из анкеты
+            profile = profile.with_age(context.age_rating)
+            if title == texts.GAMES_TITLE:
+                title = texts.GAMES_TITLE_WITH_RATING.format(
+                    age_ratings.rating_label(context.age_rating)
+                )
+
         played_ids = self._library.played_game_ids(user_id)
         query = self._games.build_query(genres=context.picked_genres, page=max(1, page))
         effective = self._games.merge_with_profile(query, profile, played_ids)
@@ -181,6 +190,7 @@ class GameListScreen(BaseScreen):
                 game_page.page,
                 has_next=game_page.has_next,
                 has_previous=game_page.has_previous,
+                rating_active=context.age_rating is not None,
             ),
         )
 

@@ -1,27 +1,30 @@
 #!/usr/bin/env python3
-"""Генератор анимированных карточек интерфейса для Adobe After Effects.
+"""Генератор обучающих анимированных карточек GameHunter (16:9, 60 fps).
 
-Скрипт собирает в `docs/ae` всё, что нужно, чтобы сделать три анимированные
-карточки (приветствие, выбор жанра, выбор игры) в After Effects и получить GIF:
+Карточка — это учебный кадр 1920×1080: слева «телефон» с настоящим интерфейсом
+бота (тексты и кнопки берутся из `gamehunter.presentation.texts` / `keyboards`),
+справа — панель с пояснениями по шагам (`texts.TUTORIAL_STEPS`). В момент
+«нажатия» кнопки вокруг неё появляется подсвечивающее кольцо.
 
-    cards/<экран>.gif        — черновая анимация карточки (готовый GIF)
-    layers/<экран>/*.png     — слои карточки с прозрачностью (импорт в AE)
-    timeline.json            — тайминг-шит: слои, секунды, кадры AE (30 fps), easing
-    preview.html             — страница «карточка сверху + текст снизу» (живое превью)
-    import_layers.jsx        — скрипт для AE: импорт слоёв, сборка композиции,
-                               расстановка ключевых кадров по timeline.json
+Результат (команда `make ae-assets`):
 
-Тексты сообщений и подписи кнопок берутся из кода бота — через генератор мокапов
-`scripts/generate_mockups.py` (модули `gamehunter.presentation.texts` и
-`gamehunter.presentation.keyboards`). Поэтому карточки соответствуют настоящему
-интерфейсу бота, а после правки текстов их можно пересобрать: `make ae-assets`.
+    gamehunter/assets/tutorial/<экран>.gif — обучающая анимация, её шлёт бот
+                                             (Экран 13 «Обучение», 60 fps)
+    docs/ae/layers/<экран>/*.png           — слои кадра с прозрачностью для AE
+    docs/ae/timeline.json                  — раскадровка: секунды и кадры AE (60 fps)
+    docs/ae/preview.html                   — превью «карточка сверху + текст снизу»
+    docs/ae/import_layers.jsx              — сборка композиции в After Effects
+
+Тексты шагов обучения живут в `gamehunter.presentation.texts.TUTORIAL_STEPS`:
+они же попадают в GIF-панель и в подписи, которые бот шлёт вместе с GIF, —
+поэтому ролик, подпись и интерфейс никогда не расходятся.
 
 Запуск:
-    python scripts/generate_ae_assets.py [--out docs/ae] [--fps 15] [--gif-width 720]
+    python scripts/generate_ae_assets.py [--fps 60] [--gif-width 960]
                                          [--backdrop light|dark|none]
                                          [--only 01_start] [--frames]
 
-Нужен Pillow (только для генерации ассетов, в рантайме бота не используется):
+Нужен Pillow (только для генерации, в рантайме бота не используется):
     pip install pillow
 """
 
@@ -34,26 +37,29 @@ import math
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-DEFAULT_OUTPUT = PROJECT_ROOT / "docs" / "ae"
+AE_OUTPUT = PROJECT_ROOT / "docs" / "ae"
+ASSETS_OUTPUT = PROJECT_ROOT / "gamehunter" / "assets" / "tutorial"
 
 # --------------------------------------------------------------------------- #
-# Размеры и палитра (координаты «1x» совпадают с мокапами docs/mockups)
+# Геометрия кадра 16:9
 # --------------------------------------------------------------------------- #
-CANVAS_W = 1080          # канва карточки 4:5 — удобно для презентаций и соцсетей
-CANVAS_H = 1350
-CANVAS_PAD = 54          # отступ карточки от края канвы (там же живёт тень)
-SS = 3                   # суперсэмплинг: рисуем втрое крупнее и уменьшаем
-AE_FPS = 30              # частота кадров тайминг-шита для After Effects
-DEFAULT_GIF_FPS = 15     # частота кадров чернового GIF
-DEFAULT_GIF_WIDTH = 720  # ширина GIF (слои для AE остаются полноразмерными)
+CANVAS_W = 1920                 # итоговый кадр (16:9)
+CANVAS_H = 1080
+CANVAS1_H = CANVAS_H // 2
+PAD = 48                        # отступ кадра
+PHONE_AREA_W = 800              # максимум ширины под «телефон»
+PHONE_GAP = 56                  # расстояние между телефоном и панелью
+AE_FPS = 60                     # частота кадров раскадровки (и композиции AE)
+DEFAULT_GIF_FPS = 60            # частота кадров GIF
+DEFAULT_GIF_WIDTH = 960         # ширина GIF (960×540 — экономит размер)
 
-CARD_W1 = 375            # ширина «телефона» в координатах 1x
+CARD_W1 = 375                   # ширина «телефона» в его собственных 1x
 MARGIN = 12
 HEADER_H = 74
 CARD_RADIUS = 26
@@ -84,6 +90,8 @@ REPLY_BUTTON_BG = "#FFFFFF"
 NOTE_TEXT = "#8E8E93"
 DOT_ON = "#8E8E93"
 DOT_OFF = "#C7C7CC"
+HEADING_COLOR = "#16202E"
+ACCENT = "#2481CC"
 BOT_USERNAME = "GameHunterBot"
 
 BACKDROPS: Dict[str, Optional[str]] = {
@@ -126,19 +134,19 @@ mockups = load_mockups()
 texts = mockups.texts
 keyboards = mockups.kb
 
+TUTORIAL_CARDS: Tuple[str, ...] = ("01_start", "03_picking_genres", "04_game_list")
 
-# --------------------------------------------------------------------------- #
-# Карточки: какие экраны анимируем и какой текст к ним подписываем
-# --------------------------------------------------------------------------- #
+
 @dataclass(frozen=True)
 class Card:
-    """Описание одной анимированной карточки."""
+    """Описание одной обучающей карточки."""
 
-    key: str            # имя файлов: "01_start"
-    screen_file: str    # экран из мокапов
-    heading: str        # заголовок для превью и текстового слоя AE
-    description: str    # поясняющий текст под карточкой
-    duration: float     # длительность анимации, секунд
+    key: str
+    screen_file: str
+    heading: str
+    description: str
+    duration: float
+    step_times: Tuple[float, ...]   # когда на панели зажигаются шаги обучения
 
 
 CARDS: Tuple[Card, ...] = (
@@ -148,10 +156,10 @@ CARDS: Tuple[Card, ...] = (
         heading="Приветствие",
         description=(
             "Первое сообщение бота после /start: коротко о том, что он умеет, "
-            "и кнопка «Старт». Появление сообщения повторяет настоящий Telegram — "
-            "сначала «печатает…», затем пузырь текста и клавиатура."
+            "и кнопка «Старт»."
         ),
         duration=6.0,
+        step_times=(0.20, 1.05, 2.55),
     ),
     Card(
         key="03_picking_genres",
@@ -159,42 +167,42 @@ CARDS: Tuple[Card, ...] = (
         heading="Выбор жанра",
         description=(
             "Бот предлагает жанры; отметка ✔ появляется сразу после нажатия, "
-            "а текст сообщения и строка «Выбрано: …» обновляются. В конце — "
-            "кнопка «Показать подборку»."
+            "а текст сообщения обновляется."
         ),
         duration=7.5,
+        step_times=(0.20, 1.65, 4.30),
     ),
     Card(
         key="04_game_list",
         screen_file="04_game_list",
         heading="Выбор игры",
         description=(
-            "Подборка игр по анкете: фильтры, номер страницы и игры, в которые "
-            "пользователь ещё не играл. Нажатие на строку ведёт в карточку игры "
-            "с обложкой из RAWG."
+            "Подборка игр по анкете: сыгранные исключены, нажатие на строку "
+            "открывает карточку игры с обложкой."
         ),
         duration=7.5,
+        step_times=(0.20, 1.00, 4.60),
     ),
 )
 
 
 # --------------------------------------------------------------------------- #
-# Слои и шаги анимации
+# Шаги анимации
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class Step:
     """Один шаг анимации слоя (время в секундах)."""
 
     layer: str
-    effect: str                 # fade | slide_up | pop | keyboard_up | tap | hide
+    effect: str                 # fade | slide_up | pop | keyboard_up | tap | hide | shift_down
     start: float
     duration: float = 0.4
     ease: str = "ease_out"
-    offset: float = 0.0         # смещение в px (координаты 1x) для slide/keyboard
-    amplitude: float = 0.06     # глубина «нажатия» для tap
+    offset: float = 0.0
+    amplitude: float = 0.06
 
     def to_payload(self) -> Dict[str, Any]:
-        """Шаг в виде JSON — с номерами кадров для After Effects (30 fps)."""
+        """Шаг в виде JSON — с номерами кадров для After Effects."""
         return {
             "layer": self.layer,
             "effect": self.effect,
@@ -213,27 +221,27 @@ class Step:
 
 @dataclass(frozen=True)
 class LayerSpec:
-    """Слой карточки: имя, порядок и положение в координатах 1x."""
+    """Слой: имя, порядок, положение в своих 1x и готовое изображение."""
 
     name: str
     order: int
+    space: str                  # "phone" | "canvas"
     x1: float
     y1: float
     w1: float
     h1: float
-    image: Any                  # изображение в суперсэмплинге (SS)
+    image: Any
 
     @property
     def file_name(self) -> str:
         return f"{self.order:02d}_{self.name}.png"
 
 
-EASINGS: Dict[str, Callable[[float], float]] = {
+EASINGS: Dict[str, Any] = {
     "linear": lambda p: p,
     "ease_out": lambda p: 1 - (1 - p) ** 3,
     "ease_in": lambda p: p ** 3,
     "ease_in_out": lambda p: 3 * p ** 2 - 2 * p ** 3,
-    # выход с небольшим «перелётом» — оживляет появление кнопок
     "back_out": lambda p: 1 + 2.2 * (p - 1) ** 3 + 1.2 * (p - 1) ** 2,
 }
 
@@ -263,7 +271,6 @@ def layer_state(steps: Sequence[Step], time: float) -> Tuple[float, float, float
             scale = 1.0 - step.amplitude * math.sin(math.pi * progress)
             alpha = 1.0
         elif step.effect == "shift_down":
-            # слой уже виден: просто опускаем его (сообщение выросло)
             alpha = 1.0
             dy = value * step.offset
         elif step.effect == "pop":
@@ -277,16 +284,23 @@ def layer_state(steps: Sequence[Step], time: float) -> Tuple[float, float, float
     return alpha, dy, scale
 
 
-def fit_scale(card_height1: float, scale_max: float = 2.6) -> float:
-    """Масштаб карточки: целиком помещается в канву и не крупнее scale_max."""
-    available_w = CANVAS_W - 2 * CANVAS_PAD
-    available_h = CANVAS_H - 2 * CANVAS_PAD
-    return max(0.4, min(scale_max, available_w / CARD_W1, available_h / card_height1))
+def phone_scale(card_height1: float) -> float:
+    """Масштаб «телефона»: по высоте кадра и отведённой ему ширине."""
+    available_h = CANVAS_H - 2 * PAD
+    return max(0.4, min(available_h / card_height1, PHONE_AREA_W / CARD_W1))
 
 
 # --------------------------------------------------------------------------- #
-# Рисование слоёв (Pillow; координаты 1x, суперсэмплинг SS)
+# Рисование: общий механизм шрифтов
 # --------------------------------------------------------------------------- #
+SS = 2.0  # текущий масштаб рисования (итоговые px на единицу 1x); меняется ниже
+
+
+def set_ss(value: float) -> None:
+    global SS
+    SS = value
+
+
 def _px(value: float) -> int:
     return int(round(value * SS))
 
@@ -309,10 +323,10 @@ def find_font(bold: bool = False) -> Optional[str]:
 
 
 def font(size1x: float, bold: bool = False) -> Any:
-    """Шрифт нужного кегля с учётом суперсэмплинга (кэшируется)."""
+    """Шрифт нужного кегля в текущем масштабе (кэшируется)."""
     from PIL import ImageFont
 
-    cache_key = (bold, int(round(size1x * SS)))
+    cache_key = (bold, max(6, int(round(size1x * SS))))
     if cache_key not in _FONTS:
         path = find_font(bold)
         if path is None:  # pragma: no cover - зависит от системы
@@ -337,8 +351,10 @@ def _center_x(draw: Any, text: str, width1x: float, size1x: float, bold: bool = 
     return max(0, (_px(width1x) - _text_width(draw, text, size1x, bold)) // 2)
 
 
-def draw_backdrop(w1: float, h1: float) -> Any:
-    """Подложка карточки: фон чата со скруглёнными углами."""
+# --------------------------------------------------------------------------- #
+# Рисование «телефона» (координаты 1x = экранные пиксели макета)
+# --------------------------------------------------------------------------- #
+def draw_backdrop_phone(w1: float, h1: float) -> Any:
     from PIL import ImageDraw
 
     image = _new(w1, h1)
@@ -349,21 +365,19 @@ def draw_backdrop(w1: float, h1: float) -> Any:
 
 
 def draw_header(w1: float) -> Any:
-    """Шапка чата: имя бота, @username, разделитель."""
     from PIL import ImageDraw
 
     image = _new(w1, HEADER_H)
     draw = ImageDraw.Draw(image)
-    # белая шапка со скруглёнными верхними углами
     draw.rounded_rectangle(
         [0, 0, _px(w1) - 1, _px(HEADER_H) - 1 + _px(CARD_RADIUS)],
         radius=_px(CARD_RADIUS),
         fill=HEADER_BG,
     )
-    draw.rectangle(
-        [0, _px(HEADER_H) - _px(CARD_RADIUS), _px(w1), _px(HEADER_H)], fill=HEADER_BG
-    )
-    draw.line([0, _px(HEADER_H) - SS, _px(w1), _px(HEADER_H) - SS], fill=HEADER_LINE, width=SS)
+    draw.rectangle([0, _px(HEADER_H) - _px(CARD_RADIUS), _px(w1), _px(HEADER_H)],
+                   fill=HEADER_BG)
+    draw.line([0, _px(HEADER_H) - SS, _px(w1), _px(HEADER_H) - SS], fill=HEADER_LINE,
+              width=max(1, int(SS)))
 
     name = texts.BOT_NAME
     draw.text((_center_x(draw, name, w1, 15, True), _px(15)), name,
@@ -375,14 +389,12 @@ def draw_header(w1: float) -> Any:
 
 
 def draw_typing(active: int = 0) -> Any:
-    """Пузырь «печатает…» с тремя точками (active — какая точка подсвечена)."""
     from PIL import ImageDraw
 
     image = _new(TYPING_W, TYPING_H)
     draw = ImageDraw.Draw(image)
-    draw.rounded_rectangle(
-        [0, 0, _px(TYPING_W) - 1, _px(TYPING_H) - 1], radius=_px(14), fill=BUBBLE_BG
-    )
+    draw.rounded_rectangle([0, 0, _px(TYPING_W) - 1, _px(TYPING_H) - 1],
+                           radius=_px(14), fill=BUBBLE_BG)
     radius = _px(3.4)
     for index in range(3):
         cx = _px(16 + index * 12)
@@ -393,21 +405,20 @@ def draw_typing(active: int = 0) -> Any:
 
 
 def bubble_height(text: str, note: str = "") -> float:
-    """Высота пузыря сообщения (та же формула, что в мокапах)."""
     lines = mockups.wrap(text)
     note_lines = mockups.wrap(note) if note else []
     return 18 + len(lines) * LINE_HEIGHT + len(note_lines) * (LINE_HEIGHT - 2) + 18
 
 
 def draw_bubble(text: str, note: str = "") -> Any:
-    """Пузырь сообщения бота: имя отправителя, текст, примечание."""
     from PIL import ImageDraw
 
     w1 = CARD_W1 - 2 * MARGIN
     h1 = bubble_height(text, note)
     image = _new(w1, h1)
     draw = ImageDraw.Draw(image)
-    draw.rounded_rectangle([0, 0, _px(w1) - 1, _px(h1) - 1], radius=_px(16), fill=BUBBLE_BG)
+    draw.rounded_rectangle([0, 0, _px(w1) - 1, _px(h1) - 1], radius=_px(16),
+                           fill=BUBBLE_BG)
     draw.text((_px(14), _px(12)), texts.BOT_NAME, font=font(SMALL_FONT_SIZE), fill=SENDER)
 
     y = 32.0
@@ -425,13 +436,10 @@ def draw_bubble(text: str, note: str = "") -> Any:
 
 
 def row_widths(labels: Sequence[str], total_width: float) -> List[float]:
-    """Ширины кнопок в ряду (логика та же, что в мокапах)."""
     if len(labels) == 1:
         return [float(total_width)]
-    widths = [
-        float(mockups.button_width(label, int(total_width), len(labels)))
-        for label in labels
-    ]
+    widths = [float(mockups.button_width(label, int(total_width), len(labels)))
+              for label in labels]
     needed = sum(widths) + 8 * (len(widths) - 1)
     if needed > total_width:
         ratio = total_width / needed
@@ -440,7 +448,6 @@ def row_widths(labels: Sequence[str], total_width: float) -> List[float]:
 
 
 def draw_inline_row(labels: Sequence[str], primaries: Sequence[bool] = ()) -> Any:
-    """Один ряд inline-кнопок во всю ширину карточки."""
     from PIL import ImageDraw
 
     total = CARD_W1 - 2 * MARGIN
@@ -452,11 +459,14 @@ def draw_inline_row(labels: Sequence[str], primaries: Sequence[bool] = ()) -> An
     x = 0.0
     for label, primary, width in zip(labels, flags, widths):
         box = [_px(x), 0, _px(x + width) - 1, _px(ROW_H) - 1]
-        draw.rounded_rectangle(box, radius=_px(10), fill=PRIMARY_BG if primary else BUTTON_BG)
+        draw.rounded_rectangle(box, radius=_px(10),
+                               fill=PRIMARY_BG if primary else BUTTON_BG)
         if not primary:
-            draw.rounded_rectangle(box, radius=_px(10), outline=BUTTON_BORDER, width=SS)
+            draw.rounded_rectangle(box, radius=_px(10), outline=BUTTON_BORDER,
+                                   width=max(1, int(SS)))
         draw.text(
-            (_px(x) + (_px(width) - _text_width(draw, label, BUTTON_FONT_SIZE)) // 2, _px(9)),
+            (_px(x) + (_px(width) - _text_width(draw, label, BUTTON_FONT_SIZE)) // 2,
+             _px(9)),
             label,
             font=font(BUTTON_FONT_SIZE),
             fill=PRIMARY_TEXT if primary else BUTTON_TEXT,
@@ -466,7 +476,6 @@ def draw_inline_row(labels: Sequence[str], primaries: Sequence[bool] = ()) -> An
 
 
 def draw_inline_rows_block(rows: Sequence[Sequence[str]]) -> Any:
-    """Блок из нескольких рядов inline-кнопок (вариант «жанры отмечены»)."""
     total = CARD_W1 - 2 * MARGIN
     height = max(1, len(rows)) * (ROW_H + ROW_GAP)
     block = _new(total, height)
@@ -478,19 +487,17 @@ def draw_inline_rows_block(rows: Sequence[Sequence[str]]) -> Any:
 
 
 def reply_height(rows: Sequence[Sequence[str]]) -> float:
-    """Высота блока обычной (reply) клавиатуры."""
     return len(rows) * (REPLY_ROW_H + 8) + 16
 
 
 def draw_reply_keyboard(rows: Sequence[Sequence[str]]) -> Any:
-    """Обычная (reply) клавиатура — блок внизу карточки."""
     from PIL import ImageDraw
 
     h1 = reply_height(rows)
     image = _new(CARD_W1, h1)
     draw = ImageDraw.Draw(image)
     draw.rectangle([0, 0, _px(CARD_W1), _px(h1)], fill=REPLY_BG)
-    draw.line([0, 0, _px(CARD_W1), 0], fill=HEADER_LINE, width=SS)
+    draw.line([0, 0, _px(CARD_W1), 0], fill=HEADER_LINE, width=max(1, int(SS)))
 
     total = CARD_W1 - 2 * MARGIN
     y = 12.0
@@ -502,17 +509,14 @@ def draw_reply_keyboard(rows: Sequence[Sequence[str]]) -> Any:
         for label in row:
             draw.rounded_rectangle(
                 [_px(x), _px(y), _px(x + width) - 1, _px(y + REPLY_ROW_H) - 1],
-                radius=_px(10),
-                fill=REPLY_BUTTON_BG,
-                outline=BUTTON_BORDER,
-                width=SS,
+                radius=_px(10), fill=REPLY_BUTTON_BG, outline=BUTTON_BORDER,
+                width=max(1, int(SS)),
             )
             draw.text(
                 (_px(x) + (_px(width) - _text_width(draw, label, BUTTON_FONT_SIZE)) // 2,
                  _px(y + 14)),
                 label,
-                font=font(BUTTON_FONT_SIZE),
-                fill=BUBBLE_TEXT,
+                font=font(BUTTON_FONT_SIZE), fill=BUBBLE_TEXT,
             )
             x += width + 8
         y += REPLY_ROW_H + 8
@@ -520,7 +524,6 @@ def draw_reply_keyboard(rows: Sequence[Sequence[str]]) -> Any:
 
 
 def draw_caption(text: str) -> Any:
-    """Подпись под карточкой: какой это экран."""
     from PIL import ImageDraw
 
     image = _new(CARD_W1, CAPTION_H)
@@ -531,24 +534,136 @@ def draw_caption(text: str) -> Any:
 
 
 def draw_shadow(width: int, height: int, radius: int, offset: int = 10) -> Any:
-    """Мягкая тень под карточкой (сразу в финальном размере)."""
     from PIL import Image, ImageDraw, ImageFilter
 
     pad = radius * 3
     image = Image.new("RGBA", (width + pad * 2, height + pad * 2), (0, 0, 0, 0))
     ImageDraw.Draw(image).rounded_rectangle(
         [pad, pad + offset, pad + width - 1, pad + height + offset - 1],
-        radius=radius,
-        fill=(20, 26, 38, 96),
+        radius=radius, fill=(20, 26, 38, 96),
     )
     return image.filter(ImageFilter.GaussianBlur(radius))
 
 
+def draw_pointer(width: int, height: int) -> Any:
+    """Подсвечивающее кольцо вокруг кнопки, на которую «нажимают»."""
+    from PIL import Image, ImageDraw
+
+    pad = 14
+    image = Image.new("RGBA", (width + pad * 2, height + pad * 2), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    draw.rounded_rectangle(
+        [2, 2, width + pad * 2 - 3, height + pad * 2 - 3],
+        radius=18, outline=ACCENT, width=6,
+    )
+    return image
+
+
 # --------------------------------------------------------------------------- #
-# Раскладка карточки: какие слои и где лежат
+# Рисование панели обучения (координаты 1x = итоговые px / 2)
+# --------------------------------------------------------------------------- #
+PANEL_STEP_FONT = 15
+PANEL_TITLE_FONT = 26
+PANEL_SUB_FONT = 13
+
+
+_MEASURE: Dict[str, Any] = {}
+
+
+def _measure_draw() -> Any:
+    from PIL import Image, ImageDraw
+
+    if "draw" not in _MEASURE:
+        _MEASURE["draw"] = ImageDraw.Draw(Image.new("RGBA", (8, 8)))
+    return _MEASURE["draw"]
+
+
+def wrap_panel(text: str, width1: float) -> List[str]:
+    """Переносит текст шага по реальной ширине панели (измерением, не на глаз)."""
+    limit_px = max(80.0, (width1 - 34) * 2)
+    draw = _measure_draw()
+    lines: List[str] = []
+    for paragraph in text.split("\n"):
+        current = ""
+        for word in paragraph.split(" "):
+            candidate = f"{current} {word}".strip()
+            box = draw.textbbox((0, 0), candidate, font=font(PANEL_STEP_FONT, True))
+            if box[2] - box[0] <= limit_px or not current:
+                current = candidate
+            else:
+                lines.append(current)
+                current = word
+        if current:
+            lines.append(current)
+    return lines or [""]
+
+
+def draw_panel_heading(heading: str, number: int, total: int, width1: float) -> Any:
+    """Заголовок карточки: «Выбор жанра» + «Карточка 2 из 3»."""
+    from PIL import ImageDraw
+
+    h1 = 64.0
+    image = _new(width1, h1)
+    draw = ImageDraw.Draw(image)
+    draw.text((0, _px(2)), heading, font=font(PANEL_TITLE_FONT, True), fill=HEADING_COLOR)
+    draw.text((0, _px(38)), f"Карточка {number} из {total} · обучение GameHunter",
+              font=font(PANEL_SUB_FONT), fill=NOTE_TEXT)
+    return image
+
+
+def step_block_height(text: str, width1: float) -> float:
+    return len(wrap_panel(text, width1 - 34)) * 21 + 30
+
+
+def draw_panel_step(index: int, text: str, width1: float, done: bool = False) -> Any:
+    """Строка шага обучения: кружок с номером (или ✔) и текст."""
+    from PIL import ImageDraw
+
+    lines = wrap_panel(text, width1 - 34)
+    h1 = len(lines) * 21 + 30
+    image = _new(width1, h1)
+    draw = ImageDraw.Draw(image)
+
+    cx, cy, r = _px(13), _px(15), _px(11)
+    if done:
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], outline=NOTE_TEXT,
+                     width=max(1, int(SS * 1.2)))
+        draw.text((cx - _px(5), cy - _px(8)), "✓", font=font(12, True), fill=NOTE_TEXT)
+        color = NOTE_TEXT
+    else:
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=ACCENT)
+        digit = str(index)
+        draw.text((cx - _text_width(draw, digit, 12, True) // 2, cy - _px(8)),
+                  digit, font=font(12, True), fill="#FFFFFF")
+        color = HEADING_COLOR
+
+    y = 6.0
+    for line in lines:
+        draw.text((_px(34), _px(y)), line, font=font(PANEL_STEP_FONT, not done),
+                  fill=color)
+        y += 21
+    return image
+
+
+def draw_progress(current: int, total: int) -> Any:
+    """Точки-индикаторы «какая карточка сейчас» внизу панели."""
+    from PIL import ImageDraw
+
+    image = _new(90, 14)
+    draw = ImageDraw.Draw(image)
+    for index in range(total):
+        cx = _px(7 + index * 26)
+        cy = _px(7)
+        r = _px(6 if index + 1 == current else 4)
+        color = ACCENT if index + 1 == current else DOT_OFF
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=color)
+    return image
+
+
+# --------------------------------------------------------------------------- #
+# Раскладка
 # --------------------------------------------------------------------------- #
 def screen_by_file(screen_file: str) -> Any:
-    """Экран из генератора мокапов по имени файла."""
     for screen in mockups.SCREENS:
         if screen.file == screen_file:
             return screen
@@ -556,7 +671,6 @@ def screen_by_file(screen_file: str) -> Any:
 
 
 def genre_variants() -> Dict[str, Tuple[str, Tuple[Tuple[str, ...], ...]]]:
-    """Варианты экрана «Выбор интересов»: без отметок → один жанр → два жанра."""
     genres = mockups.GENRES
     variants: Dict[str, Tuple[str, Tuple[Tuple[str, ...], ...]]] = {}
     for stage, selected in (
@@ -572,43 +686,33 @@ def genre_variants() -> Dict[str, Tuple[str, Tuple[Tuple[str, ...], ...]]]:
     return variants
 
 
-def build_layers(card: Card) -> Tuple[List[LayerSpec], float, float]:
-    """Собирает слои карточки.
-
-    Возвращает (слои, высота карточки в 1x, на сколько px опускаются кнопки,
-    когда сообщение растёт после выбора жанра).
-    """
+def build_layers(card: Card) -> Dict[str, Any]:
+    """Собирает слои карточки: «телефон» (phone) и панель обучения (canvas)."""
     screen = screen_by_file(card.screen_file)
-    layers: List[LayerSpec] = []
 
     bubble_text: str = screen.text
     bubble_note: str = screen.note
     inline_rows: List[Tuple[str, ...]] = [tuple(row) for row in screen.buttons]
     variants: Dict[str, Tuple[str, Tuple[Tuple[str, ...], ...]]] = {}
-
     if card.key == "03_picking_genres":
         stages = genre_variants()
         bubble_text, rows_none = stages["none"]
         inline_rows = [tuple(row) for row in rows_none]
         variants = {"one": stages["one"], "two": stages["two"]}
 
-    # --- раскладка по вертикали ----------------------------------------- #
     content_top = HEADER_H + 16
     bubble_h = bubble_height(bubble_text, bubble_note)
-    # когда жанр отмечают, сообщение растёт: кнопки в этот момент плавно
-    # съезжают вниз на delta_h — место под это резервируем сразу
     delta_h = 0.0
     if variants:
-        delta_h = max(
-            bubble_height(message, bubble_note) for message, _ in variants.values()
-        ) - bubble_h
+        delta_h = max(bubble_height(message, bubble_note)
+                      for message, _ in variants.values()) - bubble_h
     rows_top = content_top + bubble_h + 12
     y = rows_top
     row_positions: List[float] = []
     for _ in inline_rows:
         row_positions.append(y)
         y += ROW_H + ROW_GAP
-    y += delta_h  # итоговое положение кнопок после «нажатий»
+    y += delta_h
 
     reply_rows = [tuple(row) for row in screen.keyboard]
     reply_y = y + 4
@@ -617,49 +721,87 @@ def build_layers(card: Card) -> Tuple[List[LayerSpec], float, float]:
     caption_y = y + 8
     card_h = caption_y + CAPTION_H + 12
 
-    # --- слои ------------------------------------------------------------ #
-    def add(name: str, x1: float, y1: float, image: Any) -> None:
-        layers.append(
-            LayerSpec(
-                name=name,
-                order=len(layers) + 1,
-                x1=x1,
-                y1=y1,
-                w1=image.size[0] / SS,
-                h1=image.size[1] / SS,
-                image=image,
-            )
+    # --- слои телефона (масштаб задаётся перед рисованием) --------------- #
+    scale = phone_scale(card_h)
+    set_ss(scale)
+    phone: List[LayerSpec] = []
+
+    def add_phone(name: str, x1: float, y1: float, image: Any) -> None:
+        phone.append(
+            LayerSpec(name=name, order=len(phone) + 1, space="phone",
+                      x1=x1, y1=y1, w1=image.size[0] / scale, h1=image.size[1] / scale,
+                      image=image)
         )
 
-    add("backdrop", 0, 0, draw_backdrop(CARD_W1, card_h))
-    add("header", 0, 0, draw_header(CARD_W1))
+    add_phone("backdrop", 0, 0, draw_backdrop_phone(CARD_W1, card_h))
+    add_phone("header", 0, 0, draw_header(CARD_W1))
     for index in range(3):
-        add(f"typing_{index}", MARGIN, content_top + bubble_h - TYPING_H - 12,
-            draw_typing(index))
-    add("bubble", MARGIN, content_top, draw_bubble(bubble_text, bubble_note))
+        add_phone(f"typing_{index}", MARGIN, content_top + bubble_h - TYPING_H - 12,
+                  draw_typing(index))
+    add_phone("bubble", MARGIN, content_top, draw_bubble(bubble_text, bubble_note))
     for index, row in enumerate(inline_rows, start=1):
         pairs = mockups.normalize_rows([row])[0]
-        add(f"inline_{index}", MARGIN, row_positions[index - 1],
-            draw_inline_row([label for label, _ in pairs], [flag for _, flag in pairs]))
+        add_phone(f"inline_{index}", MARGIN, row_positions[index - 1],
+                  draw_inline_row([label for label, _ in pairs],
+                                  [flag for _, flag in pairs]))
     shift = 0.0
     for stage, (message, rows) in variants.items():
-        add(f"bubble_{stage}", MARGIN, content_top, draw_bubble(message, bubble_note))
-        # первый вариант появляется там же, где были кнопки без отметок,
-        # и затем съезжает вниз; следующие — сразу на итоговом месте
-        add(f"rows_{stage}", MARGIN, row_positions[0] + shift,
-            draw_inline_rows_block(rows))
+        add_phone(f"bubble_{stage}", MARGIN, content_top, draw_bubble(message, bubble_note))
+        add_phone(f"rows_{stage}", MARGIN, row_positions[0] + shift,
+                  draw_inline_rows_block(rows))
         shift = delta_h
     if reply_rows:
-        add("reply_keyboard", 0, reply_y, draw_reply_keyboard(reply_rows))
-    add("caption", 0, caption_y, draw_caption(screen.caption))
-    return layers, card_h, delta_h
+        add_phone("reply_keyboard", 0, reply_y, draw_reply_keyboard(reply_rows))
+    add_phone("caption", 0, caption_y, draw_caption(screen.caption))
+
+    # --- панель обучения (1x = итог / 2) --------------------------------- #
+    set_ss(2.0)
+    phone_w = CARD_W1 * scale
+    panel_x1 = (PAD + phone_w + PHONE_GAP) / 2
+    panel_w1 = (CANVAS_W - PAD) / 2 - panel_x1
+
+    canvas: List[LayerSpec] = []
+
+    def add_canvas(name: str, x1: float, y1: float, image: Any) -> None:
+        canvas.append(
+            LayerSpec(name=name, order=len(canvas) + 1, space="canvas",
+                      x1=x1, y1=y1, w1=image.size[0] / 2, h1=image.size[1] / 2,
+                      image=image)
+        )
+
+    add_canvas("panel_heading", panel_x1, 62,
+               draw_panel_heading(card.heading,
+                                  TUTORIAL_CARDS.index(card.key) + 1,
+                                  len(TUTORIAL_CARDS), panel_w1))
+
+    step_y = 148.0
+    step_texts = texts.TUTORIAL_STEPS.get(card.key, ())
+    for index, text in enumerate(step_texts, start=1):
+        add_canvas(f"step_{index}_on", panel_x1, step_y,
+                   draw_panel_step(index, text, panel_w1, done=False))
+        add_canvas(f"step_{index}_off", panel_x1, step_y,
+                   draw_panel_step(index, text, panel_w1, done=True))
+        step_y += step_block_height(text, panel_w1)
+
+    add_canvas("progress", panel_x1, CANVAS1_H - 46,
+               draw_progress(TUTORIAL_CARDS.index(card.key) + 1, len(TUTORIAL_CARDS)))
+
+    set_ss(2.0)
+    return {
+        "phone": phone,
+        "canvas": canvas,
+        "card_h1": card_h,
+        "delta_h": delta_h,
+        "scale": scale,
+        "panel_x1": panel_x1,
+        "step_count": len(step_texts),
+    }
 
 
 # --------------------------------------------------------------------------- #
-# Раскадровка: шаги анимации для каждой карточки
+# Раскадровка
 # --------------------------------------------------------------------------- #
 def intro_steps(bubble_start: float) -> List[Step]:
-    """Общее начало: тень, подложка, шапка, «печатает…», сообщение."""
     return [
         Step("shadow", "fade", 0.00, 0.35),
         Step("backdrop", "fade", 0.00, 0.35),
@@ -671,11 +813,24 @@ def intro_steps(bubble_start: float) -> List[Step]:
         Step("typing_2", "pop", 0.79, 0.01, ease="linear"),
         Step("typing_2", "hide", bubble_start - 0.25, 0.18),
         Step("bubble", "slide_up", bubble_start, 0.55, offset=26),
+        Step("panel_heading", "slide_up", 0.10, 0.5, offset=12),
+        Step("progress", "fade", 0.30, 0.5),
     ]
 
 
+def panel_steps(card: Card) -> List[Step]:
+    """Шаги панели обучения: загораются по одному, предыдущий гаснет в «✔»."""
+    steps: List[Step] = []
+    total = card.step_times
+    for index, moment in enumerate(total, start=1):
+        steps.append(Step(f"step_{index}_on", "fade", moment, 0.35))
+        if index < len(total):
+            steps.append(Step(f"step_{index}_on", "hide", total[index] - 0.05, 0.12))
+            steps.append(Step(f"step_{index}_off", "fade", total[index] - 0.05, 0.25))
+    return steps
+
+
 def inline_names(layers: Sequence[LayerSpec]) -> List[str]:
-    """Имена слоёв-рядов inline-кнопок в числовом порядке."""
     numbers = sorted(
         int(layer.name.split("_", 1)[1])
         for layer in layers
@@ -684,22 +839,27 @@ def inline_names(layers: Sequence[LayerSpec]) -> List[str]:
     return [f"inline_{number}" for number in numbers]
 
 
-def build_steps(card: Card, layers: Sequence[LayerSpec], delta_h: float = 0.0) -> List[Step]:
-    """Раскадровка карточки: порядок появления слоёв и «нажатия» кнопок."""
-    names = {layer.name for layer in layers}
+def build_steps(card: Card, layout: Dict[str, Any]) -> List[Step]:
+    """Раскадровка карточки: телефон + панель + подсветка нажатий."""
+    phone = layout["phone"]
+    names = {layer.name for layer in phone} | {layer.name for layer in layout["canvas"]}
+    delta_h: float = layout["delta_h"]
     steps: List[Step] = list(intro_steps(1.05 if card.key == "01_start" else 1.00))
+    steps += panel_steps(card)
+    taps: List[Tuple[float, str]] = []
 
     if card.key == "01_start":
         steps.append(Step("reply_keyboard", "keyboard_up", 1.75, 0.45, offset=70))
         steps.append(Step("reply_keyboard", "tap", 2.55, 0.35))
+        taps.append((2.55, "reply_keyboard"))
         steps.append(Step("caption", "fade", 2.30, 0.45))
 
     elif card.key == "03_picking_genres":
-        rows = inline_names(layers)
+        rows = inline_names(phone)
         for index, name in enumerate(rows):
             steps.append(Step(name, "slide_up", 1.65 + index * 0.11, 0.38, offset=14))
-        # первое нажатие: отмечен один жанр — сообщение и клавиатура обновились
         steps.append(Step("inline_1", "tap", 3.30, 0.30))
+        taps.append((3.30, "inline_1"))
         steps.append(Step("bubble", "hide", 3.42, 0.10))
         steps.append(Step("bubble_one", "fade", 3.42, 0.18))
         for name in rows:
@@ -707,36 +867,42 @@ def build_steps(card: Card, layers: Sequence[LayerSpec], delta_h: float = 0.0) -
         steps.append(Step("rows_one", "pop", 3.42, 0.24, ease="back_out"))
         if delta_h:
             steps.append(Step("rows_one", "shift_down", 3.50, 0.30, offset=delta_h))
-        # второе нажатие: отмечены два жанра
         steps.append(Step("rows_one", "tap", 4.30, 0.30))
+        taps.append((4.30, "rows_one"))
         steps.append(Step("bubble_one", "hide", 4.42, 0.10))
         steps.append(Step("bubble_two", "fade", 4.42, 0.18))
         steps.append(Step("rows_one", "hide", 4.42, 0.01, ease="linear"))
         steps.append(Step("rows_two", "pop", 4.42, 0.24, ease="back_out"))
         steps.append(Step("caption", "fade", 5.15, 0.45))
 
-    else:  # 04_game_list — выбор игры
-        rows = inline_names(layers)
+    else:  # 04_game_list
+        rows = inline_names(phone)
         for index, name in enumerate(rows):
             steps.append(Step(name, "slide_up", 1.70 + index * 0.13, 0.40, offset=16))
         steps.append(Step("inline_1", "tap", 4.60, 0.34))
+        taps.append((4.60, "inline_1"))
         steps.append(Step("caption", "fade", 5.20, 0.45))
 
-    unknown = {step.layer for step in steps} - (names | {"shadow"})
+    # подсветка кнопки в момент «нажатия»
+    for index, (moment, target) in enumerate(taps, start=1):
+        steps.append(Step(f"pointer_{index}", "pop", moment, 0.25, ease="back_out"))
+        steps.append(Step(f"pointer_{index}", "hide", moment + 1.0, 0.3))
+
+    unknown = {step.layer for step in steps} - (names | {"shadow"} |
+                                                {f"pointer_{i}" for i in range(1, 5)})
     if unknown:  # pragma: no cover - защита от опечатки в раскадровке
         raise RuntimeError(f"В раскадровке есть несуществующие слои: {sorted(unknown)}")
-    return sorted(steps, key=lambda step: (step.start, step.layer))
+    return sorted(steps, key=lambda step: (step.start, step.layer)), taps
 
 
 # --------------------------------------------------------------------------- #
-# Рендер: слои в финальном масштабе и кадры анимации
+# Рендер кадров
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class RenderedLayer:
-    """Слой в финальном масштабе: изображение и позиция на канве."""
-
     name: str
     order: int
+    space: str
     image: Any
     x: int
     y: int
@@ -744,87 +910,92 @@ class RenderedLayer:
     height: int
 
 
-def render_layers(
-    layers: Sequence[LayerSpec],
-    card_h1: float,
-    scale: float,
-    card_x: int,
-    card_y: int,
-) -> List[RenderedLayer]:
-    """Уменьшает слои из суперсэмплинга в финальный масштаб и считает позиции."""
-    from PIL import Image
+def render_layers(layout: Dict[str, Any]) -> Tuple[List[RenderedLayer], Dict[str, Any]]:
+    """Считает итоговые позиции слоёв телефона и панели на канве 1920×1080."""
+    scale: float = layout["scale"]
+    card_h1: float = layout["card_h1"]
+    phone_w = int(round(CARD_W1 * scale))
+    phone_h = int(round(card_h1 * scale))
+    phone_x = PAD
+    phone_y = (CANVAS_H - phone_h) // 2
 
     rendered: List[RenderedLayer] = []
-    for layer in layers:
-        width = max(1, int(round(layer.w1 * scale)))
-        height = max(1, int(round(layer.h1 * scale)))
+    for layer in layout["phone"]:
         rendered.append(
             RenderedLayer(
-                name=layer.name,
-                order=layer.order,
-                image=layer.image.resize((width, height), Image.LANCZOS),
-                x=card_x + int(round(layer.x1 * scale)),
-                y=card_y + int(round(layer.y1 * scale)),
-                width=width,
-                height=height,
+                name=layer.name, order=layer.order, space="phone", image=layer.image,
+                x=phone_x + int(round(layer.x1 * scale)),
+                y=phone_y + int(round(layer.y1 * scale)),
+                width=layer.image.size[0], height=layer.image.size[1],
+            )
+        )
+    for layer in layout["canvas"]:
+        rendered.append(
+            RenderedLayer(
+                name=layer.name, order=100 + layer.order, space="canvas",
+                image=layer.image,
+                x=int(round(layer.x1 * 2)), y=int(round(layer.y1 * 2)),
+                width=layer.image.size[0], height=layer.image.size[1],
             )
         )
 
-    shadow = draw_shadow(
-        int(round(CARD_W1 * scale)),
-        int(round(card_h1 * scale)),
-        max(6, int(round(12 * scale))),
-        offset=int(round(6 * scale)),
-    )
-    card_w = int(round(CARD_W1 * scale))
-    pad = (shadow.size[0] - card_w) // 2
+    shadow = draw_shadow(phone_w, phone_h, max(8, int(round(12 * scale))),
+                         offset=int(round(6 * scale)))
+    pad = (shadow.size[0] - phone_w) // 2
     rendered.insert(
         0,
-        RenderedLayer(
-            name="shadow",
-            order=0,
-            image=shadow,
-            x=card_x - pad,
-            y=card_y - pad,
-            width=shadow.size[0],
-            height=shadow.size[1],
-        ),
+        RenderedLayer(name="shadow", order=0, space="phone", image=shadow,
+                      x=phone_x - pad, y=phone_y - pad,
+                      width=shadow.size[0], height=shadow.size[1]),
     )
+    geometry = {"phone": (phone_x, phone_y, phone_w, phone_h)}
+    return rendered, geometry
+
+
+def add_pointers(rendered: List[RenderedLayer],
+                 taps: Sequence[Tuple[float, str]]) -> List[RenderedLayer]:
+    """Добавляет слои-кольца подсветки вокруг кнопок в моменты нажатий."""
+    by_name = {layer.name: layer for layer in rendered}
+    for index, (_, target) in enumerate(taps, start=1):
+        target_layer = by_name.get(target)
+        if target_layer is None:
+            continue
+        ring = draw_pointer(target_layer.width, target_layer.height)
+        rendered.append(
+            RenderedLayer(
+                name=f"pointer_{index}", order=200 + index, space="phone", image=ring,
+                x=target_layer.x - 14, y=target_layer.y - 14,
+                width=ring.size[0], height=ring.size[1],
+            )
+        )
     return rendered
 
 
 def paste_clipped(canvas: Any, image: Any, x: int, y: int) -> None:
-    """Вставляет слой на канву, обрезая выход за границы (как в AE)."""
     width, height = image.size
     left, top = max(0, -x), max(0, -y)
     right, bottom = min(width, canvas.size[0] - x), min(height, canvas.size[1] - y)
     if right <= left or bottom <= top:
         return
-    canvas.alpha_composite(image.crop((left, top, right, bottom)),
-                           (x + left, y + top))
+    canvas.alpha_composite(image.crop((left, top, right, bottom)), (x + left, y + top))
 
 
-def compose_frame(
-    rendered: Sequence[RenderedLayer],
-    steps_by_layer: Dict[str, List[Step]],
-    time: float,
-    backdrop: Any,
-    scale: float,
-) -> Any:
-    """Собирает один кадр анимации."""
-    from PIL import Image
-
+def compose_frame(rendered: Sequence[RenderedLayer],
+                  steps_by_layer: Dict[str, List[Step]], time: float,
+                  backdrop: Any, scale: float) -> Any:
     canvas = backdrop.copy()
     for layer in rendered:
         alpha, dy1, layer_scale = layer_state(steps_by_layer.get(layer.name, []), time)
         if alpha <= 0.01:
             continue
         image = layer.image
-        x, y = layer.x, layer.y + int(round(dy1 * scale))
+        # смещения телефона заданы в его 1x, панели — в канвасных 1x (итог / 2)
+        factor = scale if layer.space == "phone" else 2.0
+        x, y = layer.x, layer.y + int(round(dy1 * factor))
         if abs(layer_scale - 1.0) > 0.002:
             width = max(1, int(round(image.size[0] * layer_scale)))
             height = max(1, int(round(image.size[1] * layer_scale)))
-            resized = image.resize((width, height), Image.LANCZOS)
+            resized = image.resize((width, height))
             x += (image.size[0] - width) // 2
             y += (image.size[1] - height) // 2
             image = resized
@@ -837,156 +1008,165 @@ def compose_frame(
 
 
 def frame_times(duration: float, fps: int) -> List[float]:
-    """Моменты времени кадров; последний кадр — ровно конец анимации."""
     count = max(2, int(round(duration * fps)))
     return [index / fps for index in range(count)] + [duration]
 
 
-def render_card_frames(
-    rendered: Sequence[RenderedLayer],
-    steps: Sequence[Step],
-    duration: float,
-    fps: int,
-    scale: float,
-    backdrop_color: Optional[str],
-) -> Tuple[List[Any], List[int]]:
-    """Кадры карточки и длительность каждого в мс.
+def frame_cs(index: int, fps: int) -> int:
+    """Длительность кадра в сотых секунды (единица хранения GIF).
 
-    Одинаковые «статичные» кадры в конце не пересчитываются и не дублируются:
-    последний кадр просто показывается дольше. Это сильно уменьшает размер GIF
-    и не меняет восприятие анимации.
+    Точные 60 fps в сотых не выразить (1.67 сотых), поэтому чередуем
+    паттерн [2, 2, 1] — в среднем ровно 1/60 c, и суммарная длительность
+    ролика совпадает с заданной.
+    """
+    if fps >= 55:
+        return (2, 2, 1)[index % 3]
+    return max(1, round(100 / fps))
+
+
+def iter_card_frames(rendered: Sequence[RenderedLayer], steps: Sequence[Step],
+                     duration: float, fps: int, scale: float,
+                     backdrop_color: Optional[str]) -> Any:
+    """Генератор кадров: по одному в памяти (иначе 450 кадров 1920×1080 = OOM).
+
+    Одинаковые кадры подряд не выдаются повторно: вызывающий сам суммирует
+    их длительности (Pillow молча выбрасывает дубликаты без суммы duration).
     """
     from PIL import Image
 
-    backdrop = Image.new(
-        "RGBA", (CANVAS_W, CANVAS_H), backdrop_color if backdrop_color else (0, 0, 0, 0)
-    )
+    backdrop = Image.new("RGBA", (CANVAS_W, CANVAS_H),
+                         backdrop_color if backdrop_color else (0, 0, 0, 0))
     steps_by_layer: Dict[str, List[Step]] = {}
     for step in steps:
         steps_by_layer.setdefault(step.layer, []).append(step)
 
     animation_end = max((step.start + step.duration for step in steps), default=0.0)
-    frame_ms = int(round(1000 / fps))
-    frames: List[Any] = []
-    durations: List[int] = []
-    static_frame: Optional[Any] = None
+    previous: Optional[bytes] = None
     for time in frame_times(duration, fps):
-        if static_frame is not None:
-            durations[-1] += frame_ms
-            continue
+        if time >= animation_end and previous is not None:
+            return
         frame = compose_frame(rendered, steps_by_layer, time, backdrop, scale)
-        frames.append(frame)
-        durations.append(frame_ms)
-        if time >= animation_end:
-            static_frame = frame
+        digest = frame.tobytes()
+        if digest == previous:
+            continue
+        previous = digest
+        yield frame
+
+
+def render_card_frames(rendered: Sequence[RenderedLayer], steps: Sequence[Step],
+                       duration: float, fps: int, scale: float,
+                       backdrop_color: Optional[str]) -> Tuple[List[Any], List[int]]:
+    """Кадры и длительности (для тестов и разовых проверок)."""
+    frames = list(iter_card_frames(rendered, steps, duration, fps, scale, backdrop_color))
+    durations = [frame_cs(i, fps) * 10 for i in range(len(frames))]
+    if durations:
+        durations[-1] += max(0, int(round(duration * 1000)) - sum(durations))
     return frames, durations
 
 
-def save_gif(frames: Sequence[Any], durations: Sequence[int], path: Path,
-             colors: int = 128, width: int = 0) -> int:
-    """Сохраняет GIF с общей палитрой; возвращает размер файла в байтах.
+def export_card_frames(rendered: Sequence[RenderedLayer], steps: Sequence[Step],
+                       duration: float, fps: int, scale: float,
+                       backdrop_color: Optional[str], gif_path: Optional[Path],
+                       frames_dir: Optional[Path], colors: int = 128,
+                       width: int = 0) -> Tuple[int, int]:
+    """Один проход по кадрам: GIF (покадровая палитра) и/или PNG-последовательность.
 
-    Палитра строится по последнему кадру: он самый «наполненный», поэтому в
-    палитру попадают все цвета интерфейса (иначе первый почти пустой кадр даёт
-    вырожденную палитру и обесцвеченный GIF).
+    Возвращает (размер GIF в байтах, число сохранённых PNG-кадров).
     """
     from PIL import Image
 
+    total_ms = int(round(duration * 1000))
     prepared: List[Any] = []
-    for frame in frames:
+    durations: List[int] = []
+    last_digest: Optional[bytes] = None
+    frames_count = 0
+    pattern_index = 0
+
+    if frames_dir is not None:
+        frames_dir.mkdir(parents=True, exist_ok=True)
+
+    for frame in iter_card_frames(rendered, steps, duration, fps, scale, backdrop_color):
         image = frame
         if width and image.size[0] != width:
             height = max(1, round(image.size[1] * width / image.size[0]))
             image = image.resize((width, height), Image.LANCZOS)
-        prepared.append(image.convert("RGB"))
+        rgb = image.convert("RGB")
+        if frames_dir is not None:
+            frames_count += 1
+            frame.save(frames_dir / f"frame_{frames_count:04d}.png")
+        digest = rgb.tobytes()
+        step_ms = frame_cs(pattern_index, fps) * 10
+        pattern_index += 1
+        if digest == last_digest:
+            durations[-1] += step_ms
+            continue
+        last_digest = digest
+        prepared.append(rgb.convert("P", palette=Image.ADAPTIVE, colors=colors))
+        durations.append(step_ms)
 
-    palette_image = prepared[-1].convert("P", palette=Image.ADAPTIVE, colors=colors)
-    quantized = [image.quantize(palette=palette_image) for image in prepared]
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    quantized[0].save(
-        path,
-        save_all=True,
-        append_images=quantized[1:],
-        duration=list(durations),
-        loop=0,
-        optimize=True,
-        format="GIF",
-    )
-    return path.stat().st_size
-
-
-def save_frames(frames: Sequence[Any], directory: Path) -> int:
-    """Сохраняет PNG-последовательность кадров (для MP4/WebM с прозрачностью)."""
-    directory.mkdir(parents=True, exist_ok=True)
-    for index, frame in enumerate(frames, start=1):
-        frame.save(directory / f"frame_{index:04d}.png")
-    return len(frames)
-
-
-# --------------------------------------------------------------------------- #
-# Экспорт: слои, тайминг-шит, превью, скрипт для AE
-# --------------------------------------------------------------------------- #
-def build_card_payload(
-    card: Card,
-    out_dir: Path,
-    fps: int = DEFAULT_GIF_FPS,
-    backdrop_name: str = "light",
-    gif_width: int = DEFAULT_GIF_WIDTH,
-    write_layers: bool = True,
-    write_gif: bool = True,
-    write_frames: bool = False,
-    colors: int = 128,
-) -> Dict[str, Any]:
-    """Собирает одну карточку: слои на диске, кадры, GIF и описание таймингов."""
-    layers1x, card_h1, delta_h = build_layers(card)
-    scale = fit_scale(card_h1)
-    card_w = int(round(CARD_W1 * scale))
-    card_h = int(round(card_h1 * scale))
-    card_x = (CANVAS_W - card_w) // 2
-    card_y = (CANVAS_H - card_h) // 2
-
-    rendered = render_layers(layers1x, card_h1, scale, card_x, card_y)
-    steps = build_steps(card, layers1x, delta_h)
-
-    if write_layers:
-        layers_dir = out_dir / "layers" / card.key
-        layers_dir.mkdir(parents=True, exist_ok=True)
-        for layer in rendered:
-            if layer.name == "shadow":
-                continue
-            layer.image.save(layers_dir / f"{layer.order:02d}_{layer.name}.png")
-
-    frames, durations = render_card_frames(
-        rendered, steps, card.duration, fps, scale, BACKDROPS.get(backdrop_name)
-    )
+    if durations:
+        durations[-1] += max(0, total_ms - sum(durations))
 
     gif_size = 0
-    if write_gif and BACKDROPS.get(backdrop_name) is not None:
-        gif_size = save_gif(frames, durations, out_dir / "cards" / f"{card.key}.gif",
-                            colors=colors, width=gif_width)
-    frames_count = save_frames(frames, out_dir / "frames" / card.key) if write_frames else 0
+    if gif_path is not None and prepared:
+        gif_path.parent.mkdir(parents=True, exist_ok=True)
+        prepared[0].save(
+            gif_path, save_all=True, append_images=prepared[1:],
+            duration=durations, loop=0, optimize=True, format="GIF",
+        )
+        gif_size = gif_path.stat().st_size
+    return gif_size, frames_count
+
+
+# --------------------------------------------------------------------------- #
+# Сборка карточки и экспорт
+# --------------------------------------------------------------------------- #
+def build_card_payload(card: Card, assets_dir: Path, ae_dir: Path, fps: int,
+                       backdrop_name: str, gif_width: int, write_gif: bool,
+                       write_frames: bool) -> Dict[str, Any]:
+    layout = build_layers(card)
+    scale: float = layout["scale"]
+    steps, taps = build_steps(card, layout)
+    rendered, geometry = render_layers(layout)
+    rendered = add_pointers(rendered, taps)
+
+    layers_dir = ae_dir / "layers" / card.key
+    layers_dir.mkdir(parents=True, exist_ok=True)
+    for layer in rendered:
+        if layer.name in {"shadow"}:
+            continue
+        layer.image.save(layers_dir / f"{layer.order:03d}_{layer.name}.png")
+
+    gif_path = assets_dir / f"{card.key}.gif"
+    gif_size, frames_count = export_card_frames(
+        rendered, steps, card.duration, fps, scale, BACKDROPS.get(backdrop_name),
+        gif_path if (write_gif and BACKDROPS.get(backdrop_name) is not None) else None,
+        ae_dir / "frames" / card.key if write_frames else None,
+        width=gif_width,
+    )
 
     screen = screen_by_file(card.screen_file)
+    phone_x, phone_y, phone_w, phone_h = geometry["phone"]
     return {
         "key": card.key,
         "title": screen.title,
         "heading": card.heading,
         "description": card.description,
-        "screen_note": screen.note,
+        "tutorial_steps": list(texts.TUTORIAL_STEPS.get(card.key, ())),
         "canvas": {"width": CANVAS_W, "height": CANVAS_H},
-        "card": {"width": card_w, "height": card_h, "x": card_x, "y": card_y},
+        "phone": {"x": phone_x, "y": phone_y, "width": phone_w, "height": phone_h},
         "scale": round(scale, 3),
         "duration_seconds": card.duration,
         "gif_fps": fps,
         "ae_fps": AE_FPS,
-        "gif_file": f"cards/{card.key}.gif" if gif_size else None,
+        "gif_file": f"gamehunter/assets/tutorial/{card.key}.gif" if gif_size else None,
         "gif_bytes": gif_size,
         "frames_exported": frames_count,
         "layers": [
             {
                 "name": layer.name,
-                "file": f"layers/{card.key}/{layer.order:02d}_{layer.name}.png",
+                "space": layer.space,
+                "file": f"layers/{card.key}/{layer.order:03d}_{layer.name}.png",
                 "x": layer.x,
                 "y": layer.y,
                 "width": layer.width,
@@ -997,9 +1177,9 @@ def build_card_payload(
         ],
         "steps": [step.to_payload() for step in steps],
         "ae_text_layers": [
-            {"role": "заголовок", "text": card.heading, "font_size_px": 64,
-             "color": "#16202E"},
-            {"role": "описание", "text": card.description, "font_size_px": 34,
+            {"role": "заголовок", "text": card.heading, "font_size_px": 52,
+             "color": HEADING_COLOR},
+            {"role": "описание", "text": card.description, "font_size_px": 30,
              "color": "#4A5568"},
         ],
     }
@@ -1010,103 +1190,84 @@ PREVIEW_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GameHunter — анимированные карточки (превью для After Effects)</title>
+<title>GameHunter — обучающие карточки 16:9, 60 fps</title>
 <style>
   * {{ box-sizing: border-box; }}
-  body {{
-    margin: 0; padding: 40px 20px 64px;
-    background: #EDF1F7; color: #16202E;
-    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  }}
-  .wrap {{ max-width: 1180px; margin: 0 auto; }}
+  body {{ margin: 0; padding: 40px 20px 64px; background: #EDF1F7; color: #16202E;
+         font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; }}
+  .wrap {{ max-width: 1080px; margin: 0 auto; }}
   h1 {{ font-size: 30px; margin: 0 0 8px; }}
   .lead {{ margin: 0 0 32px; color: #4A5568; font-size: 16px; line-height: 1.55; }}
-  .grid {{ display: grid; gap: 28px;
-           grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }}
   section {{ background: #fff; border-radius: 18px; padding: 20px 20px 24px;
-             box-shadow: 0 10px 30px rgba(20, 30, 50, .10); }}
+             box-shadow: 0 10px 30px rgba(20, 30, 50, .10); margin-bottom: 28px; }}
   section img {{ width: 100%; height: auto; border-radius: 12px; display: block; }}
-  h2 {{ font-size: 20px; margin: 18px 0 6px; }}
+  h2 {{ font-size: 22px; margin: 18px 0 6px; }}
   p {{ margin: 0 0 10px; color: #4A5568; font-size: 15px; line-height: 1.55; }}
+  ol {{ margin: 0 0 12px; padding-left: 22px; color: #4A5568; font-size: 15px;
+        line-height: 1.6; }}
   code {{ background: #F1F4F9; border-radius: 6px; padding: 1px 6px; font-size: 13px; }}
   .meta {{ font-size: 13px; color: #7A8699; }}
-  footer {{ margin-top: 32px; font-size: 14px; color: #4A5568; line-height: 1.6; }}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Анимированные карточки GameHunter</h1>
+  <h1>Обучающие карточки GameHunter — 16:9, 60 fps</h1>
   <p class="lead">
-    Три карточки: приветствие, выбор жанра и выбор игры — анимация сверху, текст
-    снизу. Слои для After Effects лежат в <code>layers/&lt;экран&gt;/*.png</code>,
-    тайминги — в <code>timeline.json</code>, инструкция —
-    <code>docs/10_ae_animaciya_kartochek.md</code>.
+    Слева — «телефон» с настоящим интерфейсом бота, справа — шаги обучения,
+    в момент нажатия кнопка подсвечивается кольцом. Эти же GIF бот отправляет
+    на экране «🎬 Как пользоваться». Слои для After Effects —
+    <code>docs/ae/layers/</code>, раскадровка — <code>docs/ae/timeline.json</code>.
   </p>
-  <div class="grid">
 {sections}
-  </div>
-  <footer>
-    Канва {canvas_w}&times;{canvas_h}, черновой GIF {fps} fps, тайминг-шит — {ae_fps} fps
-    (как в After Effects). Слои PNG полноразмерные: их можно импортировать в AE
-    и перенести ключевые кадры из <code>timeline.json</code> либо запустить
-    <code>import_layers.jsx</code>.
-  </footer>
 </div>
 </body>
 </html>
 """
 
-SECTION_TEMPLATE = """    <section>
-      <img src="{gif}" alt="{heading} — анимированная карточка GameHunter">
-      <h2>{index}. {heading}</h2>
-      <p>{description}</p>
-      <p class="meta">{title} · карточка {card_w}&times;{card_h} px · {layers} слоёв ·
-      {steps} шагов анимации · {duration} с{size}</p>
-      <p class="meta"><code>{gif}</code></p>
-    </section>"""
+SECTION_TEMPLATE = """  <section>
+    <img src="{gif}" alt="{heading} — обучающая карточка GameHunter">
+    <h2>{index}. {heading}</h2>
+    <p>{description}</p>
+    <ol>
+{steps_html}
+    </ol>
+    <p class="meta">{title} · 1920×1080 · 60 fps · {duration} с{size} ·
+    <code>{gif}</code></p>
+  </section>"""
 
 
 def preview_html(payloads: Sequence[Dict[str, Any]], fps: int) -> str:
-    """Страница-превью: карточка сверху, текст снизу."""
     sections: List[str] = []
     for index, payload in enumerate(payloads, start=1):
-        card = payload["card"]
         size = payload.get("gif_bytes") or 0
+        steps_html = "\n".join(
+            f"      <li>{step}</li>" for step in payload["tutorial_steps"]
+        )
         sections.append(
             SECTION_TEMPLATE.format(
-                gif=payload.get("gif_file") or f"cards/{payload['key']}.gif",
+                gif=f"../../{payload['gif_file']}" if payload.get("gif_file") else "",
                 heading=payload["heading"],
                 description=payload["description"],
                 title=payload["title"],
-                card_w=card["width"],
-                card_h=card["height"],
-                layers=len(payload["layers"]),
-                steps=len(payload["steps"]),
+                steps_html=steps_html,
                 duration=payload["duration_seconds"],
                 index=index,
                 size=f" · GIF {size / 1024 / 1024:.2f} МБ" if size else "",
             )
         )
-    return PREVIEW_TEMPLATE.format(
-        sections="\n".join(sections),
-        fps=fps,
-        ae_fps=AE_FPS,
-        canvas_w=CANVAS_W,
-        canvas_h=CANVAS_H,
-    )
+    return PREVIEW_TEMPLATE.format(sections="\n".join(sections))
 
 
-JSX_TEMPLATE = """// GameHunter: импорт слоёв карточки и сборка композиции в After Effects.
+JSX_TEMPLATE = """// GameHunter: импорт слоёв обучающей карточки в After Effects.
 //
 // Как пользоваться:
 //   1. File -> Scripts -> Run Script File... и выберите этот файл.
-//   2. В диалоге укажите папку docs/ae/layers/<экран> (например, 01_start).
-//   3. Скрипт создаст композицию {width}x{height}, {fps} fps, разложит слои по местам
-//      и проставит ключевые кадры Opacity/Position из timeline.json.
+//   2. Укажите папку docs/ae/layers/<экран> (например, 01_start).
+//   3. Скрипт создаст композицию {width}x{height}, {fps} fps, разложит слои и
+//      проставит ключевые кадры Opacity/Position из timeline.json.
 //
-// Скрипт вспомогательный: эффекты «pop» и «tap» (масштаб) доделайте вручную —
-// в AE это Scale с Easy Ease (F9) либо expression overshoot (см. документ
-// docs/10_ae_animaciya_kartochek.md).
+// Эффекты «pop», «tap» и «shift_down» доделайте вручную по раскадровке
+// (docs/10_ae_animaciya_kartochek.md): Scale с Easy Ease (F9).
 (function () {{
     var WIDTH = {width}, HEIGHT = {height}, FPS = {fps};
 
@@ -1178,7 +1339,9 @@ JSX_TEMPLATE = """// GameHunter: импорт слоёв карточки и с�
                 if (step.effect === "slide_up") {{
                     var pos = cl.property("Position");
                     var base = pos.value;
-                    pos.setValueAtTime(t0, [base[0], base[1] + step.offset_px * cardInfo.scale]);
+                    var factor = (cardInfo.layers && step.layer.indexOf("step_") === 0
+                        || step.layer === "panel_heading" || step.layer === "progress") ? 2 : cardInfo.scale;
+                    pos.setValueAtTime(t0, [base[0], base[1] + step.offset_px * factor]);
                     pos.setValueAtTime(t1, base);
                 }}
             }}
@@ -1192,25 +1355,26 @@ JSX_TEMPLATE = """// GameHunter: импорт слоёв карточки и с�
 """
 
 
-def write_outputs(out_dir: Path, payloads: Sequence[Dict[str, Any]], fps: int) -> List[Path]:
-    """Сохраняет timeline.json, preview.html и скрипт для AE."""
-    out_dir.mkdir(parents=True, exist_ok=True)
+def write_outputs(ae_dir: Path, payloads: Sequence[Dict[str, Any]], fps: int) -> List[Path]:
+    ae_dir.mkdir(parents=True, exist_ok=True)
 
-    timeline_path = out_dir / "timeline.json"
+    timeline_path = ae_dir / "timeline.json"
     timeline_path.write_text(
         json.dumps(
             {
                 "project": texts.BOT_NAME,
                 "generated_by": "scripts/generate_ae_assets.py",
                 "canvas": {"width": CANVAS_W, "height": CANVAS_H},
+                "aspect": "16:9",
                 "ae_fps": AE_FPS,
                 "gif_fps": fps,
                 "palette": {
                     "background": BACKGROUND,
                     "bubble": BUBBLE_BG,
-                    "accent": SENDER,
+                    "accent": ACCENT,
                     "text": BUBBLE_TEXT,
                     "note": NOTE_TEXT,
+                    "heading": HEADING_COLOR,
                 },
                 "cards": payloads,
             },
@@ -1221,75 +1385,60 @@ def write_outputs(out_dir: Path, payloads: Sequence[Dict[str, Any]], fps: int) -
         encoding="utf-8",
     )
 
-    preview_path = out_dir / "preview.html"
+    preview_path = ae_dir / "preview.html"
     preview_path.write_text(preview_html(payloads, fps), encoding="utf-8")
 
-    jsx_path = out_dir / "import_layers.jsx"
+    jsx_path = ae_dir / "import_layers.jsx"
     jsx_path.write_text(
         JSX_TEMPLATE.format(width=CANVAS_W, height=CANVAS_H, fps=AE_FPS), encoding="utf-8"
     )
     return [timeline_path, preview_path, jsx_path]
 
 
-def generate(
-    output: Path = DEFAULT_OUTPUT,
-    fps: int = DEFAULT_GIF_FPS,
-    backdrop: str = "light",
-    gif_width: int = DEFAULT_GIF_WIDTH,
-    only: Optional[str] = None,
-    write_frames: bool = False,
-    write_gif: bool = True,
-) -> List[Path]:
-    """Главная функция: собирает карточки и служебные файлы."""
+def generate(output_ae: Path = AE_OUTPUT, output_assets: Path = ASSETS_OUTPUT,
+             fps: int = DEFAULT_GIF_FPS, backdrop: str = "light",
+             gif_width: int = DEFAULT_GIF_WIDTH, only: Optional[str] = None,
+             write_frames: bool = False, write_gif: bool = True) -> List[Path]:
     cards = [card for card in CARDS if only in (None, card.key)]
     if not cards:
         raise SystemExit(
-            f"Карточка {only!r} не найдена. Доступны: "
-            f"{', '.join(card.key for card in CARDS)}"
+            f"Карточка {only!r} не найдена. Доступны: {', '.join(c.key for c in CARDS)}"
         )
 
     payloads: List[Dict[str, Any]] = []
     for card in cards:
         payload = build_card_payload(
-            card,
-            output,
-            fps=fps,
-            backdrop_name=backdrop,
-            gif_width=gif_width,
-            write_gif=write_gif,
-            write_frames=write_frames,
+            card, output_assets, output_ae, fps=fps, backdrop_name=backdrop,
+            gif_width=gif_width, write_gif=write_gif, write_frames=write_frames,
         )
-        box = payload["card"]
         size = (payload.get("gif_bytes") or 0) / 1024 / 1024
+        phone = payload["phone"]
         print(
-            f"  {card.key:<18} карточка {box['width']}x{box['height']} px, "
+            f"  {card.key:<18} телефон {phone['width']}x{phone['height']} px, "
             f"слоёв {len(payload['layers'])}, шагов {len(payload['steps'])}, "
-            f"{payload['duration_seconds']} с"
-            + (f", GIF {size:.2f} МБ" if size else "")
+            f"{payload['duration_seconds']} с" + (f", GIF {size:.2f} МБ" if size else "")
         )
         payloads.append(payload)
 
-    written = write_outputs(output, payloads, fps)
+    written = write_outputs(output_ae, payloads, fps)
     for path in written:
         print(f"  {path.relative_to(PROJECT_ROOT)}")
     return written
 
 
-def main(argv: Optional[Iterable[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="Ассеты для анимации карточек в AE")
-    parser.add_argument("--out", default=str(DEFAULT_OUTPUT), help="каталог для ассетов")
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    parser = argparse.ArgumentParser(description="Обучающие карточки 16:9 для бота и AE")
+    parser.add_argument("--out", default=str(AE_OUTPUT), help="каталог AE-ассетов")
+    parser.add_argument("--assets", default=str(ASSETS_OUTPUT),
+                        help="каталог GIF для бота")
     parser.add_argument("--fps", type=int, default=DEFAULT_GIF_FPS, help="кадры в секунду GIF")
     parser.add_argument("--gif-width", type=int, default=DEFAULT_GIF_WIDTH,
-                        help="ширина GIF в px (0 — как канва)")
-    parser.add_argument(
-        "--backdrop",
-        choices=sorted(BACKDROPS),
-        default="light",
-        help="фон канвы: light, dark или none (прозрачный — GIF тогда не пишется)",
-    )
-    parser.add_argument("--only", default=None, help="собрать одну карточку (например 01_start)")
+                        help="ширина GIF в px (0 — как канва 1920)")
+    parser.add_argument("--backdrop", choices=sorted(BACKDROPS), default="light",
+                        help="фон кадра: light, dark или none")
+    parser.add_argument("--only", default=None, help="собрать одну карточку")
     parser.add_argument("--frames", action="store_true",
-                        help="сохранить PNG-последовательность кадров (для MP4/WebM)")
+                        help="сохранить PNG-последовательность кадров")
     parser.add_argument("--no-gif", action="store_true", help="не сохранять GIF")
     args = parser.parse_args(list(argv) if argv is not None else None)
 
@@ -1303,14 +1452,10 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         )
         return 1
 
-    print("Собираем анимированные карточки GameHunter…")
+    print("Собираем обучающие карточки GameHunter (16:9, 60 fps)…")
     generate(
-        Path(args.out),
-        fps=args.fps,
-        backdrop=args.backdrop,
-        gif_width=args.gif_width,
-        only=args.only,
-        write_frames=args.frames,
+        Path(args.out), Path(args.assets), fps=args.fps, backdrop=args.backdrop,
+        gif_width=args.gif_width, only=args.only, write_frames=args.frames,
         write_gif=not args.no_gif,
     )
     return 0

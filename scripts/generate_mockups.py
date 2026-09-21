@@ -47,6 +47,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from gamehunter.domain import age_ratings  # noqa: E402
 from gamehunter.domain.entities import (  # noqa: E402
     FavoriteGame,
     Franchise,
@@ -779,6 +780,17 @@ def build_screens() -> Tuple[Screen, ...]:
                     favorites_page.items, favorites_page.page, favorites_page.total_pages
                 )
             ),
+        ),
+        # Экран 14. Подбор по возрастному рейтингу
+        Screen(
+            file="14_age_rating",
+            title="Экран 14. Возрастной рейтинг",
+            text=texts.AGE_RATING_TITLE
+            + "\n\n"
+            + texts.AGE_RATING_CURRENT.format(age_ratings.rating_label(13)),
+            buttons=labels_of(kb.age_rating_keyboard(13)),
+            note="Выбранный рейтинг подменяет возраст из анкеты: подборка "
+            "показывает игры, подходящие под категорию.",
         ),
     )
 

@@ -177,7 +177,7 @@ class TestApplicationAssembly:
         assert (tmp_path / "app.db").exists()
 
     def test_all_screens_are_present(self, application: Application):
-        assert len(application.screens.__dataclass_fields__) == 17
+        assert len(application.screens.__dataclass_fields__) == 19
 
     def test_all_callback_actions_are_routed(self, application: Application):
         actions = {

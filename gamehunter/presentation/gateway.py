@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import logging
 from typing import Optional
 
@@ -55,6 +57,25 @@ class TelegramGateway:
             logger.warning("Не удалось отправить фото %s: %s", image_url, exc)
         except Exception:  # noqa: BLE001 - бот не должен «падать»
             logger.exception("Ошибка при отправке фото в чат %s", chat_id)
+        return False
+
+    # ------------------------------------------------------------------ #
+    def send_animation(
+        self, chat_id: int, animation: Path, caption: str = ""
+    ) -> bool:
+        """Отправляет GIF-анимацию файлом. Возвращает False, если не получилось."""
+        try:
+            with open(animation, "rb") as handle:
+                self._bot.send_animation(
+                    chat_id, handle, caption=self._truncate(caption) or None
+                )
+            return True
+        except FileNotFoundError:
+            logger.warning("Файл анимации не найден: %s", animation)
+        except ApiTelegramException as exc:
+            logger.warning("Не удалось отправить анимацию %s: %s", animation, exc)
+        except Exception:  # noqa: BLE001 - бот не должен «падать»
+            logger.exception("Ошибка при отправке анимации в чат %s", chat_id)
         return False
 
     # ------------------------------------------------------------------ #

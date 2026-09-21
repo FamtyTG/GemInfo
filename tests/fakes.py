@@ -14,6 +14,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
@@ -377,6 +378,7 @@ class SentMessage:
     text: str
     markup: Any = None
     photo: Optional[str] = None
+    animation: Optional[Path] = None
 
 
 @dataclass
@@ -384,9 +386,11 @@ class FakeGateway:
     """Замена TelegramGateway: записывает сообщения вместо отправки в Telegram."""
 
     photo_fails: bool = False
+    animation_fails: bool = False
     events: List[SentMessage] = field(default_factory=list)
     messages: List[SentMessage] = field(default_factory=list)
     photos: List[SentMessage] = field(default_factory=list)
+    animations: List[SentMessage] = field(default_factory=list)
     answered_callbacks: int = 0
 
     def send_text(self, chat_id: int, text: str, reply_markup=None) -> bool:
@@ -404,6 +408,16 @@ class FakeGateway:
             chat_id=chat_id, text=caption, markup=reply_markup, photo=image_url
         )
         self.photos.append(message)
+        self.events.append(message)
+        return True
+
+    def send_animation(self, chat_id: int, animation: Path, caption: str = "") -> bool:
+        if self.animation_fails:
+            return False
+        message = SentMessage(
+            chat_id=chat_id, text=caption, animation=Path(animation)
+        )
+        self.animations.append(message)
         self.events.append(message)
         return True
 
@@ -431,6 +445,7 @@ class FakeGateway:
         self.events.clear()
         self.messages.clear()
         self.photos.clear()
+        self.animations.clear()
 
 
 def make_message(

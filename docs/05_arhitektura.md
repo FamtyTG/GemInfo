@@ -93,14 +93,16 @@
 
 | Модуль | Классы и функции | Ответственность |
 |--------|------------------|-----------------|
-| `handlers.py` | `BotHandlers`, `safe_handler`, `UNSUPPORTED_CONTENT_TYPES` | регистрация обработчиков telebot, разбор callback-данных (28 маршрутов), маршрутизация текста по текущему экрану, перехват всех ошибок |
+| `handlers.py` | `BotHandlers`, `safe_handler`, `UNSUPPORTED_CONTENT_TYPES` | регистрация обработчиков telebot, разбор callback-данных (34 маршрута), маршрутизация текста по текущему экрану, перехват всех ошибок |
 | `screens/base.py` | `BaseScreen` | общий предок экранов: `send`, `context`, `save`, `show_error`, `state_lost`, логирование экрана |
 | `screens/menu.py` | `StartScreen`, `MainMenuScreen` | Экраны 1–2 |
 | `screens/picking.py` | `GenrePickingScreen`, `GameListScreen`, `GameCardScreen` | Экраны 3–5 |
 | `screens/franchise.py` | `FranchiseInputScreen`, `FranchiseListScreen`, `FranchiseGamesScreen` | Экраны 6–8 |
 | `screens/profile.py` | `ProfileScreen`, `AgeInputScreen`, `ProfileGenresScreen`, `ProfilePlatformsScreen`, `RegionInputScreen` | Экраны 9, 9а–9г |
 | `screens/library.py` | `PlayedListScreen`, `PlayedInfoScreen`, `ReviewInputScreen`, `FavoritesScreen` | Экраны 10–12 |
-| `screens/__init__.py` | `ScreenContainer`, `build_screens` | контейнер из 17 экранов и их связывание (взаимные переходы) |
+| `screens/tutorial.py` | `TutorialScreen` | Экран 13 (обучающие GIF) |
+| `screens/rating.py` | `AgeRatingScreen` | Экран 14 (возрастной рейтинг) |
+| `screens/__init__.py` | `ScreenContainer`, `build_screens` | контейнер из 19 экранов и их связывание (взаимные переходы) |
 | `texts.py` | константы и `format_*` | все тексты бота и форматирование списков, карточек, анкеты |
 | `keyboards.py` | `ButtonText`, `CallbackAction`, `Callback`, `parse_callback`, `*_keyboard()` | подписи кнопок, схема callback-данных, сборка клавиатур |
 | `state.py` | `ContextScreen`, `UserContext`, `StateStorage` | состояние диалога пользователя и переходы между экранами |
@@ -209,10 +211,10 @@ GemInfo/
 ├── scripts/
 │   ├── init_db.py               # создание таблиц и демо-данных
 │   └── generate_mockups.py      # генерация SVG-мокапов
-├── tests/                       # 1409 тестов: юнит + интеграционные + сквозные
+├── tests/                       # 1501 тест: юнит + интеграционные + сквозные
 │   ├── conftest.py              # фикстуры: база SQLite, сервисы, экраны, бот
 │   ├── fakes.py                 # подставные провайдеры, шлюз, фабрики сущностей
-│   └── test_*.py                # 20 модулей тестов
+│   └── test_*.py                # 23 модуля тестов
 ├── docs/                        # 9 документов, диаграммы DrawIO, мокапы SVG
 ├── .env.example                 # шаблон настроек (ключи — только из окружения)
 ├── docker-compose.yml           # PostgreSQL 16 + Adminer

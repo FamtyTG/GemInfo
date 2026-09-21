@@ -49,8 +49,8 @@ class TestContextScreen:
         assert len(values) == len(set(values))
 
     def test_screen_count_matches_documented_map(self):
-        # 12 экранов из карты перемещения + режимы анкеты и ввода отзыва
-        assert len(list(ContextScreen)) == 16
+        # 12 экранов из карты перемещения + режимы анкеты, отзыва и рейтинга
+        assert len(list(ContextScreen)) == 17
 
 
 class TestMainMenu:
@@ -423,3 +423,24 @@ class TestStateStorage:
 
         assert len(storage) == 10
         assert all(storage.get(user_id).screen == ContextScreen.PROFILE for user_id in range(10))
+
+
+class TestAgeRatingContext:
+    """Состояние Экрана 14: выбранный возрастной рейтинг."""
+
+    def test_at_age_rating_switches_screen(self):
+        context = UserContext().at_age_rating()
+
+        assert context.screen == ContextScreen.AGE_RATING
+
+    def test_with_age_rating_sets_and_resets(self):
+        context = UserContext().with_age_rating(17)
+
+        assert context.age_rating == 17
+        assert context.with_age_rating(None).age_rating is None
+
+    def test_age_rating_survives_game_list_transition(self):
+        context = UserContext().with_age_rating(13).at_game_list((), 1, 1, "фильтры")
+
+        assert context.age_rating == 13
+        assert context.screen == ContextScreen.GAME_LIST

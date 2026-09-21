@@ -503,3 +503,57 @@ class TestMarkupTypes:
     def test_all_keyboards_are_inline_markups(self, markup):
         assert isinstance(markup, InlineKeyboardMarkup)
         assert markup.keyboard
+
+
+class TestAgeRatingKeyboard:
+    """Клавиатура Экрана 14 и строка смены рейтинга в подборке."""
+
+    def test_categories_and_service_row(self):
+        rows = [[button.text for button in row]
+                for row in keyboards.age_rating_keyboard(None).keyboard]
+
+        assert rows[0] == ["3+ — малышам (ESRB EC)", "6+ — всем (ESRB E)"]
+        assert rows[-1] == [
+            keyboards.ButtonText.RESET_RATING,
+            keyboards.ButtonText.BACK_TO_MENU,
+        ]
+        assert len(rows) == 4
+
+    def test_selected_category_is_marked(self):
+        rows = [[button.text for button in row]
+                for row in keyboards.age_rating_keyboard(13).keyboard]
+
+        marked = [label for row in rows for label in row if label.startswith("✔")]
+        assert marked == ["✔ 13+ — подросткам (ESRB T)"]
+
+    def test_pick_callbacks_carry_age(self):
+        callbacks = [
+            button.callback_data
+            for row in keyboards.age_rating_keyboard(None).keyboard
+            for button in row
+        ]
+
+        assert f"{keyboards.CallbackAction.AGE_RATING_PICK}:18" in callbacks
+        assert keyboards.CallbackAction.AGE_RATING_RESET in callbacks
+
+    def test_games_keyboard_rating_row(self):
+        plain = keyboards.games_keyboard((), 1)
+        active = keyboards.games_keyboard((), 1, rating_active=True)
+
+        plain_texts = [button.text for row in plain.keyboard for button in row]
+        active_texts = [button.text for row in active.keyboard for button in row]
+
+        assert keyboards.ButtonText.CHANGE_RATING not in plain_texts
+        assert keyboards.ButtonText.CHANGE_RATING in active_texts
+
+    def test_main_menu_has_rating_button(self):
+        def label_of(button):
+            if isinstance(button, dict):  # телебот хранит кнопки словарями
+                return button.get("text")
+            return getattr(button, "text", button)
+
+        rows = [[label_of(button) for button in row]
+                for row in keyboards.main_menu_keyboard().keyboard]
+
+        assert [keyboards.ButtonText.AGE_RATING] in rows
+        assert keyboards.ButtonText.AGE_RATING in keyboards.MENU_BUTTON_TEXTS

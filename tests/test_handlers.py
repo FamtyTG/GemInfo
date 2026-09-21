@@ -170,6 +170,30 @@ class TestCallbacks:
         assert storage.get(USER_ID).picked_genres == ()
         assert games_provider.search_calls[-1].genres == ()
 
+    def test_age_rating_screen(self, started: BotHandlers, gateway, storage):
+        started.on_callback(make_callback(CallbackAction.AGE_RATING))
+
+        assert texts.AGE_RATING_TITLE in gateway.last_text
+        assert storage.get(USER_ID).screen == ContextScreen.AGE_RATING
+
+    def test_age_rating_pick(self, started: BotHandlers, gateway, storage):
+        started.on_callback(make_callback(f"{CallbackAction.AGE_RATING_PICK}:17"))
+
+        assert storage.get(USER_ID).age_rating == 17
+        assert "17+" in gateway.last_text  # подборка с рейтингом в заголовке
+
+    def test_age_rating_pick_without_value(self, started: BotHandlers, gateway):
+        started.on_callback(make_callback(f"{CallbackAction.AGE_RATING_PICK}:"))
+
+        assert texts.UNKNOWN_COMMAND in gateway.last_text
+
+    def test_age_rating_reset(self, started: BotHandlers, gateway, storage):
+        started.on_callback(make_callback(f"{CallbackAction.AGE_RATING_PICK}:17"))
+        started.on_callback(make_callback(CallbackAction.AGE_RATING_RESET))
+
+        assert storage.get(USER_ID).age_rating is None
+        assert texts.AGE_RATING_RESET_DONE in gateway.last_text
+
     def test_games_page(self, started: BotHandlers, gateway, storage):
         started.on_callback(make_callback(CallbackAction.PICK_ALL))
         started.on_callback(make_callback("games:2"))

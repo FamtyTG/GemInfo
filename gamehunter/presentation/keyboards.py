@@ -33,6 +33,7 @@ from telebot.types import (
     ReplyKeyboardRemove,
 )
 
+from gamehunter.domain import age_ratings
 from gamehunter.domain.entities import FavoriteGame, Franchise, Game, Genre, PlayedGame, Platform
 
 
@@ -48,6 +49,10 @@ class ButtonText:
     PROFILE = "Моя анкета"
     PLAYED = "Во что я играл"
     FAVORITES = "Избранное"
+    TUTORIAL = "🎬 Как пользоваться"
+    AGE_RATING = "Игры по возрастному рейтингу"
+    RESET_RATING = "Сбросить рейтинг"
+    CHANGE_RATING = "🎂 Изменить возрастной рейтинг"
 
     BACK_TO_MENU = "В главное меню"
     BACK = "Назад"
@@ -84,6 +89,8 @@ MENU_BUTTON_TEXTS = frozenset(
         ButtonText.PROFILE,
         ButtonText.PLAYED,
         ButtonText.FAVORITES,
+        ButtonText.TUTORIAL,
+        ButtonText.AGE_RATING,
     }
 )
 
@@ -122,6 +129,12 @@ class CallbackAction:
     DELETE_PLAYED = "del"
     FAVORITES_PAGE = "favs"
     BACK_GAMES = "back_games"
+    TUTORIAL = "tut"
+    TUTORIAL_CARD = "tut_card"
+    TUTORIAL_ALL = "tut_all"
+    AGE_RATING = "age"
+    AGE_RATING_PICK = "age_pick"
+    AGE_RATING_RESET = "age_reset"
 
 
 @dataclass(frozen=True)
@@ -224,7 +237,67 @@ def main_menu_keyboard() -> ReplyKeyboardMarkup:
     markup.add(ButtonText.PICK, ButtonText.FRANCHISE)
     markup.add(ButtonText.PROFILE)
     markup.add(ButtonText.PLAYED, ButtonText.FAVORITES)
+    markup.add(ButtonText.TUTORIAL)
+    markup.add(ButtonText.AGE_RATING)
     return markup
+
+
+def tutorial_keyboard() -> InlineKeyboardMarkup:
+    """Экран 13: выбор обучающей карточки или просмотр всех подряд."""
+    return _inline(
+        (
+            InlineKeyboardButton(
+                "1️⃣ Приветствие",
+                callback_data=f"{CallbackAction.TUTORIAL_CARD}:01_start",
+            ),
+            InlineKeyboardButton(
+                "2️⃣ Выбор жанра",
+                callback_data=f"{CallbackAction.TUTORIAL_CARD}:03_picking_genres",
+            ),
+        ),
+        (
+            InlineKeyboardButton(
+                "3️⃣ Выбор игры",
+                callback_data=f"{CallbackAction.TUTORIAL_CARD}:04_game_list",
+            ),
+            InlineKeyboardButton(
+                "▶️ Смотреть все", callback_data=CallbackAction.TUTORIAL_ALL
+            ),
+        ),
+        (
+            InlineKeyboardButton(
+                ButtonText.BACK_TO_MENU, callback_data=CallbackAction.MAIN_MENU
+            ),
+        ),
+    )
+
+
+def age_rating_keyboard(selected_age: Optional[int]) -> InlineKeyboardMarkup:
+    """Экран 14: категории возрастных рейтингов (ESRB/PEGI)."""
+    choices = list(age_ratings.RATING_CHOICES)
+    rows: List[Sequence[InlineKeyboardButton]] = []
+    for index in range(0, len(choices), 2):
+        pair = choices[index:index + 2]
+        rows.append(
+            tuple(
+                InlineKeyboardButton(
+                    ("✔ " if age == selected_age else "") + label,
+                    callback_data=f"{CallbackAction.AGE_RATING_PICK}:{age}",
+                )
+                for age, label in pair
+            )
+        )
+    rows.append(
+        (
+            InlineKeyboardButton(
+                ButtonText.RESET_RATING, callback_data=CallbackAction.AGE_RATING_RESET
+            ),
+            InlineKeyboardButton(
+                ButtonText.BACK_TO_MENU, callback_data=CallbackAction.MAIN_MENU
+            ),
+        )
+    )
+    return _inline(*rows)
 
 
 def hide_keyboard() -> ReplyKeyboardRemove:
@@ -411,6 +484,7 @@ def games_keyboard(
     has_previous: bool = False,
     back_action: str = CallbackAction.PICK_GENRES,
     back_label: str = ButtonText.OTHER_GENRES,
+    rating_active: bool = False,
 ) -> InlineKeyboardMarkup:
     """Экран 4: выбор игры из подборки + пагинация."""
     rows: List[Sequence[InlineKeyboardButton]] = [
@@ -434,6 +508,14 @@ def games_keyboard(
             InlineKeyboardButton(
                 ButtonText.FORWARD, callback_data=games_page_callback(page + 1)
             )
+        )
+    if rating_active:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    ButtonText.CHANGE_RATING, callback_data=CallbackAction.AGE_RATING
+                )
+            ]
         )
     rows.append(pagination)
     rows.append([InlineKeyboardButton(back_label, callback_data=back_action)])

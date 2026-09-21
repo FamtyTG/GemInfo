@@ -65,7 +65,7 @@ def screen_by_file(name: str) -> mockups.Screen:
 # --------------------------------------------------------------------------- #
 class TestScreenSet:
     def test_seventeen_screens(self):
-        assert len(SCREENS) == 17
+        assert len(SCREENS) == 18
 
     def test_file_names_are_unique(self):
         assert len(IDS) == len(set(IDS))
@@ -82,7 +82,7 @@ class TestScreenSet:
 
         assert numbers == {
             "01", "02", "03", "04", "05", "06", "07", "08", "09", "09a", "09b",
-            "09c", "09d", "10", "11", "11a", "12",
+            "09c", "09d", "10", "11", "11a", "12", "14",
         }
 
     def test_titles_are_unique(self):
@@ -130,6 +130,8 @@ class TestContentComesFromCode:
             (keyboards.ButtonText.PICK, keyboards.ButtonText.FRANCHISE),
             (keyboards.ButtonText.PROFILE,),
             (keyboards.ButtonText.PLAYED, keyboards.ButtonText.FAVORITES),
+            (keyboards.ButtonText.TUTORIAL,),
+            (keyboards.ButtonText.AGE_RATING,),
         )
 
     def test_start_keyboard(self):
@@ -518,7 +520,7 @@ class TestGenerate:
     def test_creates_all_files(self, tmp_path):
         created = mockups.generate(tmp_path, with_png=False)
 
-        assert len(created) == 17
+        assert len(created) == 18
         assert all(path.exists() for path in created)
         assert {path.name for path in created} == {f"{screen.file}.svg" for screen in SCREENS}
 
@@ -537,7 +539,7 @@ class TestGenerate:
         mockups.generate(target, with_png=False)
 
         assert target.exists()
-        assert len(list(target.glob("*.svg"))) == 17
+        assert len(list(target.glob("*.svg"))) == 18
 
     def test_png_is_skipped_without_converter(self, tmp_path, monkeypatch):
         monkeypatch.setattr(mockups, "save_png", lambda path: None)
@@ -556,7 +558,7 @@ class TestGenerate:
 
         mockups.generate(tmp_path, with_png=True)
 
-        assert len(list(tmp_path.glob("*.png"))) == 17
+        assert len(list(tmp_path.glob("*.png"))) == 18
 
     def test_save_png_reports_missing_converter(self, tmp_path, monkeypatch):
         import builtins
@@ -593,8 +595,8 @@ class TestGenerate:
         code = mockups.main(["--out", str(tmp_path), "--no-png"])
 
         assert code == 0
-        assert "Создано мокапов: 17" in capsys.readouterr().out
-        assert len(list(tmp_path.glob("*.svg"))) == 17
+        assert "Создано мокапов: 18" in capsys.readouterr().out
+        assert len(list(tmp_path.glob("*.svg"))) == 18
 
     def test_cli_reports_missing_png_converter(self, tmp_path, capsys, monkeypatch):
         monkeypatch.setattr(mockups, "save_png", lambda path: None)
