@@ -82,7 +82,7 @@ class TestScreenSet:
 
         assert numbers == {
             "01", "02", "03", "04", "05", "06", "07", "08", "09", "09a", "09b",
-            "09c", "09d", "10", "11", "11a", "12", "14",
+            "09c", "09d", "10", "11", "11a", "12", "13",
         }
 
     def test_titles_are_unique(self):
@@ -130,7 +130,6 @@ class TestContentComesFromCode:
             (keyboards.ButtonText.PICK, keyboards.ButtonText.FRANCHISE),
             (keyboards.ButtonText.PROFILE,),
             (keyboards.ButtonText.PLAYED, keyboards.ButtonText.FAVORITES),
-            (keyboards.ButtonText.TUTORIAL,),
             (keyboards.ButtonText.AGE_RATING,),
         )
 

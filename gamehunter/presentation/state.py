@@ -45,7 +45,7 @@ class ContextScreen(str, Enum):
     PLAYED_INFO = "played_info"            # Экран 11
     REVIEW_INPUT = "review_input"          # Экран 11а
     FAVORITES_LIST = "favorites_list"      # Экран 12
-    AGE_RATING = "age_rating"              # Экран 14
+    AGE_RATING = "age_rating"              # Экран 13
 
     def is_waiting_for_text(self) -> bool:
         """True, если на этом экране ожидается текстовый ввод."""
@@ -59,7 +59,7 @@ class UserContext:
     screen: ContextScreen = ContextScreen.MAIN_MENU
 
     # --- подбор игр по интересам ---
-    #: переопределение возраста подборки (Экран 14), None — по анкете
+    #: переопределение возраста подборки (Экран 13), None — по анкете
     age_rating: Optional[int] = None
     picked_genres: Tuple[str, ...] = ()
     genre_catalog: Tuple[Genre, ...] = ()
@@ -120,7 +120,7 @@ class UserContext:
         )
 
     def at_age_rating(self) -> "UserContext":
-        """Переход на Экран 14 «Возрастной рейтинг»."""
+        """Переход на Экран 13 «Возрастной рейтинг»."""
         return replace(self, screen=ContextScreen.AGE_RATING)
 
     def with_age_rating(self, age: Optional[int]) -> "UserContext":

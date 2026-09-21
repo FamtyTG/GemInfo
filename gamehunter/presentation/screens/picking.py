@@ -15,6 +15,7 @@ from gamehunter.domain.exceptions import (
 from gamehunter.domain.services import GameService, LibraryService, ProfileService
 from gamehunter.presentation import keyboards, texts
 from gamehunter.presentation.gateway import TelegramGateway
+from gamehunter.presentation.screens import tutorial
 from gamehunter.presentation.screens.base import BaseScreen
 from gamehunter.presentation.state import ContextScreen, StateStorage, UserContext
 
@@ -49,6 +50,7 @@ class GenrePickingScreen(BaseScreen):
         context = self.context(user_id).at_picking(genre_catalog=genres)
         self.save(user_id, context)
         self._render(chat_id, context)
+        tutorial.send_tutorial(self._gateway, chat_id, "picking")
 
     def toggle(self, chat_id: int, user_id: int, slug: str) -> None:
         """Отмечает или снимает жанр и обновляет экран."""
@@ -141,7 +143,7 @@ class GameListScreen(BaseScreen):
             profile = profile.with_genres(())
 
         if context.age_rating is not None:
-            # Экран 14: рейтинг важнее возраста из анкеты
+            # Экран 13: рейтинг важнее возраста из анкеты
             profile = profile.with_age(context.age_rating)
             if title == texts.GAMES_TITLE:
                 title = texts.GAMES_TITLE_WITH_RATING.format(
@@ -193,6 +195,7 @@ class GameListScreen(BaseScreen):
                 rating_active=context.age_rating is not None,
             ),
         )
+        tutorial.send_tutorial(self._gateway, chat_id, "game_list")
 
     def rerender(self, chat_id: int, user_id: int) -> None:
         """Показывает сохранённый список игр (кнопка «Назад» из карточки игры)."""

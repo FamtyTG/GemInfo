@@ -781,10 +781,10 @@ def build_screens() -> Tuple[Screen, ...]:
                 )
             ),
         ),
-        # Экран 14. Подбор по возрастному рейтингу
+        # Экран 13. Подбор по возрастному рейтингу
         Screen(
-            file="14_age_rating",
-            title="Экран 14. Возрастной рейтинг",
+            file="13_age_rating",
+            title="Экран 13. Возрастной рейтинг",
             text=texts.AGE_RATING_TITLE
             + "\n\n"
             + texts.AGE_RATING_CURRENT.format(age_ratings.rating_label(13)),

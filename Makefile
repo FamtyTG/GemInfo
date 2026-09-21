@@ -15,7 +15,7 @@ help:
 	@echo "  make run          - запустить Telegram-бота"
 	@echo "  make test         - запустить тесты"
 	@echo "  make mockups      - перегенерировать SVG-мокапы экранов"
-	@echo "  make ae-assets    - собрать карточки и слои для After Effects (docs/ae)"
+	@echo "  make ae-assets    - собрать обучающие MP4-ролики и слои для After Effects"
 	@echo "  make lint         - проверить синтаксис всех файлов проекта"
 	@echo "  make clean        - удалить кэш Python и локальную базу SQLite"
 

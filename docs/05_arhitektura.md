@@ -100,9 +100,9 @@
 | `screens/franchise.py` | `FranchiseInputScreen`, `FranchiseListScreen`, `FranchiseGamesScreen` | Экраны 6–8 |
 | `screens/profile.py` | `ProfileScreen`, `AgeInputScreen`, `ProfileGenresScreen`, `ProfilePlatformsScreen`, `RegionInputScreen` | Экраны 9, 9а–9г |
 | `screens/library.py` | `PlayedListScreen`, `PlayedInfoScreen`, `ReviewInputScreen`, `FavoritesScreen` | Экраны 10–12 |
-| `screens/tutorial.py` | `TutorialScreen` | Экран 13 (обучающие GIF) |
-| `screens/rating.py` | `AgeRatingScreen` | Экран 14 (возрастной рейтинг) |
-| `screens/__init__.py` | `ScreenContainer`, `build_screens` | контейнер из 19 экранов и их связывание (взаимные переходы) |
+| `screens/tutorial.py` | `send_tutorial` | обучающие MP4-ролики на экранах 1, 3 и 4 |
+| `screens/rating.py` | `AgeRatingScreen` | Экран 13 (возрастной рейтинг) |
+| `screens/__init__.py` | `ScreenContainer`, `build_screens` | контейнер из 18 экранов и их связывание (взаимные переходы) |
 | `texts.py` | константы и `format_*` | все тексты бота и форматирование списков, карточек, анкеты |
 | `keyboards.py` | `ButtonText`, `CallbackAction`, `Callback`, `parse_callback`, `*_keyboard()` | подписи кнопок, схема callback-данных, сборка клавиатур |
 | `state.py` | `ContextScreen`, `UserContext`, `StateStorage` | состояние диалога пользователя и переходы между экранами |
@@ -211,7 +211,7 @@ GemInfo/
 ├── scripts/
 │   ├── init_db.py               # создание таблиц и демо-данных
 │   └── generate_mockups.py      # генерация SVG-мокапов
-├── tests/                       # 1501 тест: юнит + интеграционные + сквозные
+├── tests/                       # 1497 тестов: юнит + интеграционные + сквозные
 │   ├── conftest.py              # фикстуры: база SQLite, сервисы, экраны, бот
 │   ├── fakes.py                 # подставные провайдеры, шлюз, фабрики сущностей
 │   └── test_*.py                # 23 модуля тестов

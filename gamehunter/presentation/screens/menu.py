@@ -6,6 +6,7 @@ import logging
 
 from gamehunter.presentation import keyboards, texts
 from gamehunter.presentation.gateway import TelegramGateway
+from gamehunter.presentation.screens import tutorial
 from gamehunter.presentation.screens.base import BaseScreen
 from gamehunter.presentation.state import StateStorage, UserContext
 
@@ -18,6 +19,7 @@ class StartScreen(BaseScreen):
     def show(self, chat_id: int) -> None:
         logger.debug("Экран 1 «Старт» для чата %s", chat_id)
         self.send(chat_id, texts.START_WELCOME, reply_markup=keyboards.start_keyboard())
+        tutorial.send_tutorial(self._gateway, chat_id, "start")
 
 
 class MainMenuScreen(BaseScreen):

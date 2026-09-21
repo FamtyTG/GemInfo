@@ -21,7 +21,7 @@ SPEC_PATH = PROJECT_ROOT / "scripts" / "generate_ae_assets.py"
 AE_DIR = PROJECT_ROOT / "docs" / "ae"
 TUTORIAL_DIR = PROJECT_ROOT / "gamehunter" / "assets" / "tutorial"
 
-TELEGRAM_ANIMATION_LIMIT = 5 * 1024 * 1024  # 50 МБ API, но держим GIF лёгкими
+TELEGRAM_ANIMATION_LIMIT = 50 * 1024 * 1024  # лимит send_animation у ботов
 
 
 def load_module():
@@ -188,16 +188,20 @@ class TestArtifacts:
         timeline = json.loads((AE_DIR / "timeline.json").read_text(encoding="utf-8"))
 
         assert timeline["ae_fps"] == 60
+        assert timeline["fps"] == 60
         assert timeline["canvas"] == {"width": 1920, "height": 1080}
         assert [card["key"] for card in timeline["cards"]] == [
             card.key for card in ae.CARDS
         ]
         for card in timeline["cards"]:
-            assert card["gif_file"] == f"gamehunter/assets/tutorial/{card['key']}.gif"
-            gif = PROJECT_ROOT / card["gif_file"]
-            assert gif.exists()
-            assert gif.stat().st_size < TELEGRAM_ANIMATION_LIMIT
-            assert card["gif_bytes"] == gif.stat().st_size
+            assert card["animation_format"] == "mp4"
+            assert card["animation_file"] == (
+                f"gamehunter/assets/tutorial/{card['key']}.mp4"
+            )
+            video = PROJECT_ROOT / card["animation_file"]
+            assert video.exists()
+            assert video.stat().st_size < TELEGRAM_ANIMATION_LIMIT
+            assert card["animation_bytes"] == video.stat().st_size
             assert card["duration_seconds"] > 3
             assert card["ae_fps"] == 60
             assert card["tutorial_steps"]
@@ -206,7 +210,7 @@ class TestArtifacts:
                     continue
                 assert (AE_DIR / layer["file"]).exists()
 
-    def test_tutorial_gifs_match_texts(self):
+    def test_tutorial_videos_match_texts(self):
         from gamehunter.presentation import texts
 
         for card in ae.CARDS:
@@ -215,7 +219,8 @@ class TestArtifacts:
     def test_preview_html_mentions_all_cards(self):
         html = (AE_DIR / "preview.html").read_text(encoding="utf-8")
         for card in ae.CARDS:
-            assert f"tutorial/{card.key}.gif" in html
+            assert f"tutorial/{card.key}.mp4" in html
+            assert "<video" in html
             assert card.heading in html
 
     def test_ae_script_exists(self):
@@ -293,6 +298,24 @@ class TestRender:
             total_ms += opened.info.get("duration", 0)
         expected_ms = len(ae.frame_times(2.0, 4)) * ae.frame_cs(0, 4) * 10
         assert total_ms == pytest.approx(expected_ms, abs=20)
+
+    def test_export_card_video_mp4(self, pil, card0, tmp_path):
+        """MP4 без палитры GIF: полное разрешение и точный хронометраж."""
+        imageio = pytest.importorskip("imageio.v2")
+        _, layout, rendered, steps = card0
+        video = tmp_path / "card.mp4"
+
+        size = ae.export_card_video(
+            rendered, steps, 2.0, 8, layout["scale"], "#EDF1F7", video
+        )
+
+        assert size > 1_000
+        reader = imageio.get_reader(str(video))
+        meta = reader.get_meta_data()
+        assert meta["size"] == (ae.CANVAS_W, ae.CANVAS_H)
+        assert meta["fps"] == 8
+        assert meta["duration"] == pytest.approx(2.0, abs=0.3)
+        reader.close()
 
     def test_export_merges_duplicate_frames(self, pil, card0, tmp_path):
         """Дубликаты кадров сливаются с суммированием длительности (Pillow их

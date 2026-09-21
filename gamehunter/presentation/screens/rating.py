@@ -1,4 +1,4 @@
-"""Экран 14 «Возрастной рейтинг»: подбор игр по категории ESRB/PEGI.
+"""Экран 13 «Возрастной рейтинг»: подбор игр по категории ESRB/PEGI.
 
 Пользователь выбирает категорию (6+, 13+, 18+…), она сохраняется в состоянии
 (``UserContext.age_rating``) и подменяет возраст из анкеты на время подборки:
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class AgeRatingScreen(BaseScreen):
-    """Экран 14. Выбор возрастного рейтинга для подборки игр."""
+    """Экран 13. Выбор возрастного рейтинга для подборки игр."""
 
     def __init__(
         self,
@@ -33,7 +33,7 @@ class AgeRatingScreen(BaseScreen):
 
     def show(self, chat_id: int, user_id: int, note: str = "") -> None:
         """Показывает категории рейтингов и текущий выбор."""
-        logger.debug("Экран 14 «Возрастной рейтинг» для пользователя %s", user_id)
+        logger.debug("Экран 13 «Возрастной рейтинг» для пользователя %s", user_id)
         context = self.context(user_id).at_age_rating()
         self.save(user_id, context)
 

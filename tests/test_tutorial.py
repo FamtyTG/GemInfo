@@ -1,116 +1,91 @@
-"""Тесты Экрана 13 «Обучение»: анимированные карточки-инструкции (GIF)."""
+"""Тесты обучающих видеокарточек: бот шлёт их прямо на своих экранах.
+
+Отдельного раздела «Обучение» нет: ролик приветствия приходит после /start,
+ролик выбора жанра — на Экране 3, ролик подборки — на Экране 4. Ошибки
+отправки не должны ломать основной сценарий экрана.
+"""
 
 from __future__ import annotations
 
-from gamehunter.presentation import keyboards, texts
+from gamehunter.presentation import texts
 from gamehunter.presentation.screens import tutorial as tutorial_module
 from gamehunter.presentation.screens.tutorial import TUTORIAL_CARDS
-from tests.fakes import buttons_of, make_callback
+from gamehunter.presentation.state import UserContext
 
 CHAT_ID = 100
 USER_ID = 200
 
 
 class TestTutorialAssets:
-    """Сами карточки собраны и лежат в репозитории."""
+    """Ролики собраны и лежат в репозитории."""
 
     def test_all_cards_exist(self):
         for card_key in TUTORIAL_CARDS:
-            gif = tutorial_module.ASSETS_DIR / f"{card_key}.gif"
-            assert gif.exists(), f"нет файла {gif}"
-            assert gif.stat().st_size > 100_000  # не пустая заглушка
+            video = tutorial_module.animation_path(card_key)
+            assert video.exists(), f"нет файла {video}"
+            assert video.stat().st_size > 100_000  # не пустая заглушка
 
     def test_cards_have_steps_in_texts(self):
         assert texts.TUTORIAL_CARD_NUMBERS["01_start"] == 1
         for card_key in TUTORIAL_CARDS:
             assert texts.TUTORIAL_STEPS[card_key]
-            assert texts.tutorial_caption(card_key)
+            caption = texts.tutorial_caption(card_key)
+            for step in texts.TUTORIAL_STEPS[card_key]:
+                assert step in caption
 
 
-class TestTutorialScreen:
-    def test_show_lists_cards(self, screens, gateway):
-        screens.tutorial.show(CHAT_ID, USER_ID)
+class TestInlineDelivery:
+    """Каждый экран присылает свою обучающую карточку."""
 
-        assert texts.TUTORIAL_MENU_TITLE in gateway.last_text
-        flat = [label for row in buttons_of(gateway.last_markup) for label in row]
-        assert "1️⃣ Приветствие" in flat
-        assert "▶️ Смотреть все" in flat
-        callbacks = [
-            button.callback_data
-            for row in gateway.last_markup.keyboard
-            for button in row
-            if getattr(button, "callback_data", None)
-        ]
-        assert keyboards.CallbackAction.TUTORIAL_ALL in callbacks
-        for card_key in TUTORIAL_CARDS:
-            assert f"{keyboards.CallbackAction.TUTORIAL_CARD}:{card_key}" in callbacks
-
-    def test_send_card_sends_animation_with_caption(self, screens, gateway):
-        screens.tutorial.send_card(CHAT_ID, USER_ID, "01_start")
+    def test_start_screen_sends_greeting_video(self, screens, gateway):
+        screens.start.show(CHAT_ID)
 
         assert len(gateway.animations) == 1
         sent = gateway.animations[0]
         assert sent.chat_id == CHAT_ID
-        assert sent.animation is not None and sent.animation.name == "01_start.gif"
+        assert sent.animation.name == "01_start.mp4"
         assert "Карточка 1 из 3" in sent.text
         assert texts.TUTORIAL_STEPS["01_start"][0] in sent.text
+        # приветственное сообщение ушло ДО ролика
+        assert gateway.messages[0].text == texts.START_WELCOME
 
-    def test_send_all_sends_three_cards_in_order(self, screens, gateway):
-        screens.tutorial.send_all(CHAT_ID, USER_ID)
+    def test_genre_picking_sends_video(self, screens, gateway):
+        screens.genre_picking.show(CHAT_ID, USER_ID)
 
-        assert [item.animation.stem for item in gateway.animations] == list(TUTORIAL_CARDS)
+        assert [item.animation.name for item in gateway.animations] == [
+            "03_picking_genres.mp4"
+        ]
 
-    def test_unknown_card_returns_to_menu(self, screens, gateway):
-        screens.tutorial.send_card(CHAT_ID, USER_ID, "no_such_card")
+    def test_game_list_sends_video(self, screens, gateway, storage):
+        storage.save(USER_ID, UserContext())
+        screens.game_list.show(CHAT_ID, USER_ID, page=1)
 
-        assert not gateway.animations
-        assert texts.TUTORIAL_MENU_TITLE in gateway.last_text
+        assert [item.animation.name for item in gateway.animations] == [
+            "04_game_list.mp4"
+        ]
 
-    def test_missing_file_notifies(self, screens, gateway, tmp_path, monkeypatch):
+    def test_pagination_does_not_resend_video(self, screens, gateway, storage):
+        """Листание страниц — это rerender, ролик повторно не шлётся."""
+        storage.save(USER_ID, UserContext())
+        screens.game_list.show(CHAT_ID, USER_ID, page=1)
+        before = len(gateway.animations)
+
+        screens.game_list.rerender(CHAT_ID, USER_ID)
+
+        assert len(gateway.animations) == before
+
+    def test_missing_file_is_not_fatal(self, screens, gateway, monkeypatch, tmp_path):
         monkeypatch.setattr(tutorial_module, "ASSETS_DIR", tmp_path)
 
-        screens.tutorial.send_card(CHAT_ID, USER_ID, "01_start")
+        screens.start.show(CHAT_ID)
 
         assert not gateway.animations
-        assert texts.TUTORIAL_MISSING in gateway.last_text
+        assert gateway.messages[0].text == texts.START_WELCOME  # экран работает
 
-    def test_send_failure_notifies(self, screens, gateway):
+    def test_send_failure_is_not_fatal(self, screens, gateway):
         gateway.animation_fails = True
 
-        screens.tutorial.send_card(CHAT_ID, USER_ID, "03_picking_genres")
+        screens.start.show(CHAT_ID)
 
-        assert texts.TUTORIAL_MISSING in gateway.last_text
-
-
-class TestTutorialRoutes:
-    def test_callback_opens_menu(self, handlers, gateway):
-        handlers.on_callback(make_callback(keyboards.CallbackAction.TUTORIAL))
-
-        assert texts.TUTORIAL_MENU_TITLE in gateway.last_text
-
-    def test_callback_sends_card(self, handlers, gateway):
-        handlers.on_callback(
-            make_callback(f"{keyboards.CallbackAction.TUTORIAL_CARD}:04_game_list")
-        )
-
-        assert len(gateway.animations) == 1
-        assert gateway.animations[0].animation.name == "04_game_list.gif"
-
-    def test_callback_card_without_value(self, handlers, gateway):
-        handlers.on_callback(make_callback(f"{keyboards.CallbackAction.TUTORIAL_CARD}:"))
-
-        assert texts.UNKNOWN_COMMAND in gateway.last_text
-
-    def test_callback_sends_all(self, handlers, gateway):
-        handlers.on_callback(make_callback(keyboards.CallbackAction.TUTORIAL_ALL))
-
-        assert len(gateway.animations) == 3
-
-    def test_menu_button_opens_tutorial(self, handlers, gateway, storage):
-        from gamehunter.presentation.state import UserContext
-        from tests.fakes import make_message
-
-        storage.save(USER_ID, UserContext())
-        handlers.on_text(make_message(text=keyboards.ButtonText.TUTORIAL))
-
-        assert texts.TUTORIAL_MENU_TITLE in gateway.last_text
+        assert not gateway.animations
+        assert gateway.messages[0].text == texts.START_WELCOME

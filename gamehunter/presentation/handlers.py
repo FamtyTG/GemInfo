@@ -104,9 +104,6 @@ class BotHandlers:
             CallbackAction.DELETE_PLAYED: self._route_delete_played,
             CallbackAction.FAVORITES_PAGE: self._route_favorites_page,
             CallbackAction.BACK_GAMES: self._route_back_to_list,
-            CallbackAction.TUTORIAL: self._route_tutorial,
-            CallbackAction.TUTORIAL_CARD: self._route_tutorial_card,
-            CallbackAction.TUTORIAL_ALL: self._route_tutorial_all,
             CallbackAction.AGE_RATING: self._route_age_rating,
             CallbackAction.AGE_RATING_PICK: self._route_age_rating_pick,
             CallbackAction.AGE_RATING_RESET: self._route_age_rating_reset,
@@ -328,7 +325,7 @@ class BotHandlers:
             self._screens.main_menu.show(chat_id, user_id)
 
     # ------------------------------------------------------------------ #
-    # Возрастной рейтинг (Экран 14)
+    # Возрастной рейтинг (Экран 13)
     # ------------------------------------------------------------------ #
     def _route_age_rating(
         self, chat_id: int, user_id: int, callback: Callback
@@ -348,25 +345,6 @@ class BotHandlers:
         self, chat_id: int, user_id: int, callback: Callback
     ) -> None:
         self._screens.age_rating.reset(chat_id, user_id)
-
-    # ------------------------------------------------------------------ #
-    # Обучение (Экран 13)
-    # ------------------------------------------------------------------ #
-    def _route_tutorial(self, chat_id: int, user_id: int, callback: Callback) -> None:
-        self._screens.tutorial.show(chat_id, user_id)
-
-    def _route_tutorial_card(
-        self, chat_id: int, user_id: int, callback: Callback
-    ) -> None:
-        if not callback.value:
-            self._unknown_button(chat_id, callback)
-            return
-        self._screens.tutorial.send_card(chat_id, user_id, callback.value)
-
-    def _route_tutorial_all(
-        self, chat_id: int, user_id: int, callback: Callback
-    ) -> None:
-        self._screens.tutorial.send_all(chat_id, user_id)
 
     # ------------------------------------------------------------------ #
     # Текстовые сообщения
@@ -442,8 +420,6 @@ class BotHandlers:
             self._screens.profile.show(chat_id, user_id)
         elif text == keyboards.ButtonText.PLAYED:
             self._screens.played_list.show(chat_id, user_id, page=1)
-        elif text == keyboards.ButtonText.TUTORIAL:
-            self._screens.tutorial.show(chat_id, user_id)
         elif text == keyboards.ButtonText.AGE_RATING:
             self._screens.age_rating.show(chat_id, user_id)
         elif text == keyboards.ButtonText.FAVORITES:

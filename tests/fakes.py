@@ -412,13 +412,13 @@ class FakeGateway:
         return True
 
     def send_animation(self, chat_id: int, animation: Path, caption: str = "") -> bool:
+        """Анимации пишем отдельно от текстовых событий: они не должны
+        сбивать проверки «последнее сообщение экрана»."""
         if self.animation_fails:
             return False
-        message = SentMessage(
-            chat_id=chat_id, text=caption, animation=Path(animation)
+        self.animations.append(
+            SentMessage(chat_id=chat_id, text=caption, animation=Path(animation))
         )
-        self.animations.append(message)
-        self.events.append(message)
         return True
 
     def answer_callback(self, call, text: str = "") -> None:

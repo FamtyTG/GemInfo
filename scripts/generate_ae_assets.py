@@ -8,16 +8,22 @@
 
 Результат (команда `make ae-assets`):
 
-    gamehunter/assets/tutorial/<экран>.gif — обучающая анимация, её шлёт бот
-                                             (Экран 13 «Обучение», 60 fps)
+    gamehunter/assets/tutorial/<экран>.mp4 — обучающий ролик (H.264, 1920×1080,
+                                             60 fps): бот отправляет его прямо
+                                             на соответствующем экране
     docs/ae/layers/<экран>/*.png           — слои кадра с прозрачностью для AE
     docs/ae/timeline.json                  — раскадровка: секунды и кадры AE (60 fps)
     docs/ae/preview.html                   — превью «карточка сверху + текст снизу»
     docs/ae/import_layers.jsx              — сборка композиции в After Effects
 
 Тексты шагов обучения живут в `gamehunter.presentation.texts.TUTORIAL_STEPS`:
-они же попадают в GIF-панель и в подписи, которые бот шлёт вместе с GIF, —
+они же попадают в панель ролика и в подписи, которые бот шлёт вместе с видео, —
 поэтому ролик, подпись и интерфейс никогда не расходятся.
+
+Формат MP4 выбран вместо GIF осознанно: GIF хранит максимум 256 цветов на кадр,
+из-за покадровой палитры текст «мерцает», а уменьшение кадра делает его мутным.
+H.264 держит полное разрешение 1920×1080, не мерцает, а весит сопоставимо с GIF.
+GIF-экспорт сохранён как опция (`--gif`) для документации и AE-черновиков.
 
 Запуск:
     python scripts/generate_ae_assets.py [--fps 60] [--gif-width 960]
@@ -1026,11 +1032,15 @@ def frame_cs(index: int, fps: int) -> int:
 
 def iter_card_frames(rendered: Sequence[RenderedLayer], steps: Sequence[Step],
                      duration: float, fps: int, scale: float,
-                     backdrop_color: Optional[str]) -> Any:
+                     backdrop_color: Optional[str], dedup: bool = True,
+                     stop_after_animation: bool = True) -> Any:
     """Генератор кадров: по одному в памяти (иначе 450 кадров 1920×1080 = OOM).
 
-    Одинаковые кадры подряд не выдаются повторно: вызывающий сам суммирует
-    их длительности (Pillow молча выбрасывает дубликаты без суммы duration).
+    Для GIF одинаковые кадры подряд не выдаются повторно (`dedup`): вызывающий
+    сам суммирует их длительности (Pillow молча выбрасывает дубликаты без суммы
+    duration), а статический хвост заменяется удлинением последнего кадра
+    (`stop_after_animation`). Для видео оба флага выключаются: кодек сам
+    сжимает статику, а хронометраж должен быть покадрово точным.
     """
     from PIL import Image
 
@@ -1042,15 +1052,46 @@ def iter_card_frames(rendered: Sequence[RenderedLayer], steps: Sequence[Step],
 
     animation_end = max((step.start + step.duration for step in steps), default=0.0)
     previous: Optional[bytes] = None
+    emitted = 0
     for time in frame_times(duration, fps):
-        if time >= animation_end and previous is not None:
+        if stop_after_animation and emitted and time >= animation_end:
             return
         frame = compose_frame(rendered, steps_by_layer, time, backdrop, scale)
-        digest = frame.tobytes()
-        if digest == previous:
-            continue
-        previous = digest
+        if dedup:
+            digest = frame.tobytes()
+            if digest == previous:
+                continue
+            previous = digest
+        emitted += 1
         yield frame
+
+
+def export_card_video(rendered: Sequence[RenderedLayer], steps: Sequence[Step],
+                      duration: float, fps: int, scale: float,
+                      backdrop_color: Optional[str], video_path: Path,
+                      quality: int = 8) -> int:
+    """Экспорт MP4 (H.264, yuv420p) в полном разрешении 1920×1080.
+
+    Без палитры GIF — текст не мерцает и не размывается; Telegram принимает
+    такие файлы через send_animation. Возвращает размер файла в байтах.
+    """
+    import imageio.v2 as imageio
+    import numpy
+
+    video_path.parent.mkdir(parents=True, exist_ok=True)
+    writer = imageio.get_writer(
+        str(video_path), fps=fps, codec="libx264", quality=quality,
+        pixelformat="yuv420p", macro_block_size=8,
+        ffmpeg_params=["-profile:v", "high", "-movflags", "+faststart"],
+    )
+    try:
+        for frame in iter_card_frames(rendered, steps, duration, fps, scale,
+                                      backdrop_color, dedup=False,
+                                      stop_after_animation=False):
+            writer.append_data(numpy.asarray(frame.convert("RGB")))
+    finally:
+        writer.close()
+    return video_path.stat().st_size if video_path.exists() else 0
 
 
 def render_card_frames(rendered: Sequence[RenderedLayer], steps: Sequence[Step],
@@ -1123,7 +1164,7 @@ def export_card_frames(rendered: Sequence[RenderedLayer], steps: Sequence[Step],
 # --------------------------------------------------------------------------- #
 def build_card_payload(card: Card, assets_dir: Path, ae_dir: Path, fps: int,
                        backdrop_name: str, gif_width: int, write_gif: bool,
-                       write_frames: bool) -> Dict[str, Any]:
+                       write_frames: bool, write_video: bool = True) -> Dict[str, Any]:
     layout = build_layers(card)
     scale: float = layout["scale"]
     steps, taps = build_steps(card, layout)
@@ -1137,13 +1178,31 @@ def build_card_payload(card: Card, assets_dir: Path, ae_dir: Path, fps: int,
             continue
         layer.image.save(layers_dir / f"{layer.order:03d}_{layer.name}.png")
 
+    backdrop_color = BACKDROPS.get(backdrop_name)
+
+    video_size = 0
+    if write_video and backdrop_color is not None:
+        video_size = export_card_video(
+            rendered, steps, card.duration, fps, scale, backdrop_color,
+            assets_dir / f"{card.key}.mp4",
+        )
+
     gif_path = assets_dir / f"{card.key}.gif"
     gif_size, frames_count = export_card_frames(
-        rendered, steps, card.duration, fps, scale, BACKDROPS.get(backdrop_name),
-        gif_path if (write_gif and BACKDROPS.get(backdrop_name) is not None) else None,
+        rendered, steps, card.duration, fps, scale, backdrop_color,
+        gif_path if (write_gif and backdrop_color is not None) else None,
         ae_dir / "frames" / card.key if write_frames else None,
         width=gif_width,
     )
+
+    if video_size:
+        animation_file: Optional[str] = f"gamehunter/assets/tutorial/{card.key}.mp4"
+        animation_bytes, animation_format = video_size, "mp4"
+    elif gif_size:
+        animation_file = f"gamehunter/assets/tutorial/{card.key}.gif"
+        animation_bytes, animation_format = gif_size, "gif"
+    else:
+        animation_file, animation_bytes, animation_format = None, 0, ""
 
     screen = screen_by_file(card.screen_file)
     phone_x, phone_y, phone_w, phone_h = geometry["phone"]
@@ -1157,8 +1216,11 @@ def build_card_payload(card: Card, assets_dir: Path, ae_dir: Path, fps: int,
         "phone": {"x": phone_x, "y": phone_y, "width": phone_w, "height": phone_h},
         "scale": round(scale, 3),
         "duration_seconds": card.duration,
-        "gif_fps": fps,
+        "fps": fps,
         "ae_fps": AE_FPS,
+        "animation_file": animation_file,
+        "animation_bytes": animation_bytes,
+        "animation_format": animation_format,
         "gif_file": f"gamehunter/assets/tutorial/{card.key}.gif" if gif_size else None,
         "gif_bytes": gif_size,
         "frames_exported": frames_count,
@@ -1200,7 +1262,8 @@ PREVIEW_TEMPLATE = """<!DOCTYPE html>
   .lead {{ margin: 0 0 32px; color: #4A5568; font-size: 16px; line-height: 1.55; }}
   section {{ background: #fff; border-radius: 18px; padding: 20px 20px 24px;
              box-shadow: 0 10px 30px rgba(20, 30, 50, .10); margin-bottom: 28px; }}
-  section img {{ width: 100%; height: auto; border-radius: 12px; display: block; }}
+  section img, section video {{ width: 100%; height: auto; border-radius: 12px;
+                                 display: block; background: #EDF1F7; }}
   h2 {{ font-size: 22px; margin: 18px 0 6px; }}
   p {{ margin: 0 0 10px; color: #4A5568; font-size: 15px; line-height: 1.55; }}
   ol {{ margin: 0 0 12px; padding-left: 22px; color: #4A5568; font-size: 15px;
@@ -1214,8 +1277,9 @@ PREVIEW_TEMPLATE = """<!DOCTYPE html>
   <h1>Обучающие карточки GameHunter — 16:9, 60 fps</h1>
   <p class="lead">
     Слева — «телефон» с настоящим интерфейсом бота, справа — шаги обучения,
-    в момент нажатия кнопка подсвечивается кольцом. Эти же GIF бот отправляет
-    на экране «🎬 Как пользоваться». Слои для After Effects —
+    в момент нажатия кнопка подсвечивается кольцом. Эти же ролики (MP4, H.264)
+    бот отправляет прямо на экранах: после /start, при выборе жанра и при
+    показе подборки. Слои для After Effects —
     <code>docs/ae/layers/</code>, раскадровка — <code>docs/ae/timeline.json</code>.
   </p>
 {sections}
@@ -1225,34 +1289,47 @@ PREVIEW_TEMPLATE = """<!DOCTYPE html>
 """
 
 SECTION_TEMPLATE = """  <section>
-    <img src="{gif}" alt="{heading} — обучающая карточка GameHunter">
+    {media}
     <h2>{index}. {heading}</h2>
     <p>{description}</p>
     <ol>
 {steps_html}
     </ol>
     <p class="meta">{title} · 1920×1080 · 60 fps · {duration} с{size} ·
-    <code>{gif}</code></p>
+    <code>{src}</code></p>
   </section>"""
 
 
 def preview_html(payloads: Sequence[Dict[str, Any]], fps: int) -> str:
     sections: List[str] = []
     for index, payload in enumerate(payloads, start=1):
-        size = payload.get("gif_bytes") or 0
+        animation = payload.get("animation_file")
+        size = payload.get("animation_bytes") or 0
+        fmt = payload.get("animation_format") or ""
+        src = f"../../{animation}" if animation else ""
+        if fmt == "mp4":
+            media = (
+                f'<video src="{src}" controls autoplay muted loop playsinline '
+                f'aria-label="{payload["heading"]} — обучающая карточка GameHunter"></video>'
+            )
+        else:
+            media = (
+                f'<img src="{src}" alt="{payload["heading"]} — обучающая карточка GameHunter">'
+            )
         steps_html = "\n".join(
             f"      <li>{step}</li>" for step in payload["tutorial_steps"]
         )
         sections.append(
             SECTION_TEMPLATE.format(
-                gif=f"../../{payload['gif_file']}" if payload.get("gif_file") else "",
+                media=media,
                 heading=payload["heading"],
                 description=payload["description"],
                 title=payload["title"],
                 steps_html=steps_html,
                 duration=payload["duration_seconds"],
                 index=index,
-                size=f" · GIF {size / 1024 / 1024:.2f} МБ" if size else "",
+                size=f" · {fmt.upper()} {size / 1024 / 1024:.2f} МБ" if size else "",
+                src=src,
             )
         )
     return PREVIEW_TEMPLATE.format(sections="\n".join(sections))
@@ -1367,7 +1444,7 @@ def write_outputs(ae_dir: Path, payloads: Sequence[Dict[str, Any]], fps: int) ->
                 "canvas": {"width": CANVAS_W, "height": CANVAS_H},
                 "aspect": "16:9",
                 "ae_fps": AE_FPS,
-                "gif_fps": fps,
+                "fps": fps,
                 "palette": {
                     "background": BACKGROUND,
                     "bubble": BUBBLE_BG,
@@ -1398,7 +1475,8 @@ def write_outputs(ae_dir: Path, payloads: Sequence[Dict[str, Any]], fps: int) ->
 def generate(output_ae: Path = AE_OUTPUT, output_assets: Path = ASSETS_OUTPUT,
              fps: int = DEFAULT_GIF_FPS, backdrop: str = "light",
              gif_width: int = DEFAULT_GIF_WIDTH, only: Optional[str] = None,
-             write_frames: bool = False, write_gif: bool = True) -> List[Path]:
+             write_frames: bool = False, write_gif: bool = False,
+             write_video: bool = True) -> List[Path]:
     cards = [card for card in CARDS if only in (None, card.key)]
     if not cards:
         raise SystemExit(
@@ -1410,13 +1488,15 @@ def generate(output_ae: Path = AE_OUTPUT, output_assets: Path = ASSETS_OUTPUT,
         payload = build_card_payload(
             card, output_assets, output_ae, fps=fps, backdrop_name=backdrop,
             gif_width=gif_width, write_gif=write_gif, write_frames=write_frames,
+            write_video=write_video,
         )
-        size = (payload.get("gif_bytes") or 0) / 1024 / 1024
+        size = (payload.get("animation_bytes") or 0) / 1024 / 1024
         phone = payload["phone"]
         print(
             f"  {card.key:<18} телефон {phone['width']}x{phone['height']} px, "
             f"слоёв {len(payload['layers'])}, шагов {len(payload['steps'])}, "
-            f"{payload['duration_seconds']} с" + (f", GIF {size:.2f} МБ" if size else "")
+            f"{payload['duration_seconds']} с"
+            + (f", {payload.get('animation_format', '').upper()} {size:.2f} МБ" if size else "")
         )
         payloads.append(payload)
 
@@ -1430,8 +1510,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Обучающие карточки 16:9 для бота и AE")
     parser.add_argument("--out", default=str(AE_OUTPUT), help="каталог AE-ассетов")
     parser.add_argument("--assets", default=str(ASSETS_OUTPUT),
-                        help="каталог GIF для бота")
-    parser.add_argument("--fps", type=int, default=DEFAULT_GIF_FPS, help="кадры в секунду GIF")
+                        help="каталог обучающих роликов для бота")
+    parser.add_argument("--fps", type=int, default=DEFAULT_GIF_FPS, help="кадры в секунду")
     parser.add_argument("--gif-width", type=int, default=DEFAULT_GIF_WIDTH,
                         help="ширина GIF в px (0 — как канва 1920)")
     parser.add_argument("--backdrop", choices=sorted(BACKDROPS), default="light",
@@ -1439,7 +1519,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--only", default=None, help="собрать одну карточку")
     parser.add_argument("--frames", action="store_true",
                         help="сохранить PNG-последовательность кадров")
-    parser.add_argument("--no-gif", action="store_true", help="не сохранять GIF")
+    parser.add_argument("--gif", action="store_true",
+                        help="дополнительно сохранить GIF-версию карточки")
+    parser.add_argument("--no-video", action="store_true",
+                        help="не сохранять MP4 (только слои и раскадровка)")
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     try:
@@ -1452,11 +1535,24 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         )
         return 1
 
+    if not args.no_video:
+        try:
+            import imageio.v2  # noqa: F401
+            import imageio_ffmpeg  # noqa: F401
+        except ImportError:  # pragma: no cover - зависит от окружения
+            print(
+                "Для экспорта MP4 нужны imageio и ffmpeg: "
+                "pip install imageio imageio-ffmpeg\n"
+                "Либо запустите без видео: --no-video (только слои и GIF).",
+                file=sys.stderr,
+            )
+            return 1
+
     print("Собираем обучающие карточки GameHunter (16:9, 60 fps)…")
     generate(
         Path(args.out), Path(args.assets), fps=args.fps, backdrop=args.backdrop,
         gif_width=args.gif_width, only=args.only, write_frames=args.frames,
-        write_gif=not args.no_gif,
+        write_gif=args.gif, write_video=not args.no_video,
     )
     return 0
 

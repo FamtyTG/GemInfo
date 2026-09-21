@@ -27,7 +27,6 @@ from gamehunter.presentation.screens.picking import (
     GameListScreen,
     GenrePickingScreen,
 )
-from gamehunter.presentation.screens.tutorial import TutorialScreen
 from gamehunter.presentation.screens.rating import AgeRatingScreen
 from gamehunter.presentation.screens.profile import (
     AgeInputScreen,
@@ -60,8 +59,7 @@ class ScreenContainer:
     played_info: PlayedInfoScreen               # Экран 11
     review_input: ReviewInputScreen             # Экран 11а
     favorites: FavoritesScreen                  # Экран 12
-    tutorial: TutorialScreen                    # Экран 13
-    age_rating: AgeRatingScreen                 # Экран 14
+    age_rating: AgeRatingScreen                 # Экран 13
 
 
 def build_screens(
@@ -116,7 +114,6 @@ def build_screens(
         gateway, storage, library_service, played_info_screen
     )
     favorites_screen = FavoritesScreen(gateway, storage, library_service)
-    tutorial_screen = TutorialScreen(gateway, storage)
     age_rating_screen = AgeRatingScreen(gateway, storage, game_list_screen)
 
     return ScreenContainer(
@@ -137,7 +134,6 @@ def build_screens(
         played_info=played_info_screen,
         review_input=review_input_screen,
         favorites=favorites_screen,
-        tutorial=tutorial_screen,
         age_rating=age_rating_screen,
     )
 
@@ -162,6 +158,5 @@ __all__ = [
     "ReviewInputScreen",
     "ScreenContainer",
     "StartScreen",
-    "TutorialScreen",
     "build_screens",
 ]

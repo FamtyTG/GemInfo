@@ -49,7 +49,6 @@ class ButtonText:
     PROFILE = "Моя анкета"
     PLAYED = "Во что я играл"
     FAVORITES = "Избранное"
-    TUTORIAL = "🎬 Как пользоваться"
     AGE_RATING = "Игры по возрастному рейтингу"
     RESET_RATING = "Сбросить рейтинг"
     CHANGE_RATING = "🎂 Изменить возрастной рейтинг"
@@ -89,7 +88,6 @@ MENU_BUTTON_TEXTS = frozenset(
         ButtonText.PROFILE,
         ButtonText.PLAYED,
         ButtonText.FAVORITES,
-        ButtonText.TUTORIAL,
         ButtonText.AGE_RATING,
     }
 )
@@ -129,9 +127,6 @@ class CallbackAction:
     DELETE_PLAYED = "del"
     FAVORITES_PAGE = "favs"
     BACK_GAMES = "back_games"
-    TUTORIAL = "tut"
-    TUTORIAL_CARD = "tut_card"
-    TUTORIAL_ALL = "tut_all"
     AGE_RATING = "age"
     AGE_RATING_PICK = "age_pick"
     AGE_RATING_RESET = "age_reset"
@@ -237,43 +232,12 @@ def main_menu_keyboard() -> ReplyKeyboardMarkup:
     markup.add(ButtonText.PICK, ButtonText.FRANCHISE)
     markup.add(ButtonText.PROFILE)
     markup.add(ButtonText.PLAYED, ButtonText.FAVORITES)
-    markup.add(ButtonText.TUTORIAL)
     markup.add(ButtonText.AGE_RATING)
     return markup
 
 
-def tutorial_keyboard() -> InlineKeyboardMarkup:
-    """Экран 13: выбор обучающей карточки или просмотр всех подряд."""
-    return _inline(
-        (
-            InlineKeyboardButton(
-                "1️⃣ Приветствие",
-                callback_data=f"{CallbackAction.TUTORIAL_CARD}:01_start",
-            ),
-            InlineKeyboardButton(
-                "2️⃣ Выбор жанра",
-                callback_data=f"{CallbackAction.TUTORIAL_CARD}:03_picking_genres",
-            ),
-        ),
-        (
-            InlineKeyboardButton(
-                "3️⃣ Выбор игры",
-                callback_data=f"{CallbackAction.TUTORIAL_CARD}:04_game_list",
-            ),
-            InlineKeyboardButton(
-                "▶️ Смотреть все", callback_data=CallbackAction.TUTORIAL_ALL
-            ),
-        ),
-        (
-            InlineKeyboardButton(
-                ButtonText.BACK_TO_MENU, callback_data=CallbackAction.MAIN_MENU
-            ),
-        ),
-    )
-
-
 def age_rating_keyboard(selected_age: Optional[int]) -> InlineKeyboardMarkup:
-    """Экран 14: категории возрастных рейтингов (ESRB/PEGI)."""
+    """Экран 13: категории возрастных рейтингов (ESRB/PEGI)."""
     choices = list(age_ratings.RATING_CHOICES)
     rows: List[Sequence[InlineKeyboardButton]] = []
     for index in range(0, len(choices), 2):
