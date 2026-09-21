@@ -101,10 +101,10 @@ class TelegramGateway:
 
     # ------------------------------------------------------------------ #
     @staticmethod
-    def _truncate(text: str) -> str:
-        """Обрезает текст до ограничения Telegram."""
+    def _truncate(text: str, limit: int = MESSAGE_MAX_LENGTH) -> str:
+        """Обрезает текст до ограничения Telegram (для подписи — своё)."""
         if text is None:
             return ""
-        if len(text) <= MESSAGE_MAX_LENGTH:
+        if len(text) <= limit:
             return text
-        return text[: MESSAGE_MAX_LENGTH - 1] + "…"
+        return text[: limit - 1] + "…"

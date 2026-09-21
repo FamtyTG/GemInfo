@@ -198,6 +198,19 @@ class TestApplicationAssembly:
         finally:
             app.stop()
 
+    def test_animation_caption_limit(self):
+        from gamehunter.presentation.gateway import TelegramGateway
+
+        short = TelegramGateway._truncate("текст", TelegramGateway.ANIMATION_CAPTION_LIMIT)
+        long_text = "а" * 2000
+        cut = TelegramGateway._truncate(long_text, TelegramGateway.ANIMATION_CAPTION_LIMIT)
+
+        assert short == "текст"
+        assert len(cut) == TelegramGateway.ANIMATION_CAPTION_LIMIT
+        assert cut.endswith("…")
+        # обычный текст по-прежнему режется до 4096
+        assert len(TelegramGateway._truncate("б" * 5000)) == 4096
+
     def test_missing_token_raises_config_error(self, env):
         env.delenv("BOT_TOKEN")
 
