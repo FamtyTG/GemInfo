@@ -1,0 +1,74 @@
+<mxfile host="app.diagrams.net" agent="GameHunter" version="24.7.8" type="device">
+  <diagram id="architecture" name="architecture">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+<mxCell id="lp" value="PRESENTATION — «что видит пользователь»" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=14;fillColor=none;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1"><mxGeometry x="40" y="40" width="1020" height="300" as="geometry"/></mxCell>
+<mxCell id="p_handlers" value="handlers.py
+BotHandlers · safe_handler
+/start, callback (28 маршрутов), текст,
+неподдерживаемые сообщения" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="70" y="80" width="300" height="90" as="geometry"/></mxCell>
+<mxCell id="p_screens" value="screens/ (17 экранов)
+menu · picking · franchise · profile · library
+BaseScreen: send, show_error, state_lost" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="400" y="80" width="320" height="90" as="geometry"/></mxCell>
+<mxCell id="p_support" value="texts.py · keyboards.py · state.py · gateway.py
+сообщения, клавиатуры и callback-данные,
+состояние диалога, отправка в Telegram" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="750" y="80" width="290" height="90" as="geometry"/></mxCell>
+<mxCell id="p_note" value="Экраны не знают ни про telebot, ни про доменные сервисы напрямую:
+всё общение с Telegram идёт через TelegramGateway, ошибки — через safe_handler." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="70" y="200" width="960" height="60" as="geometry"/></mxCell>
+<mxCell id="ld" value="DOMAIN — «правила предметной области» (без Telegram, SQL и HTTP)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=14;fillColor=none;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1"><mxGeometry x="40" y="380" width="1020" height="300" as="geometry"/></mxCell>
+<mxCell id="d_services" value="services/
+GameService — подбор, возрастной фильтр, кэш
+ProfileService — анкета, IP, регион
+LibraryService — сыгранные игры, отзывы, избранное" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="70" y="420" width="400" height="100" as="geometry"/></mxCell>
+<mxCell id="d_entities" value="entities.py (12 сущностей)
+Game · GameDetails · GamePage · GameQuery
+Genre · Platform · Franchise · Region
+UserProfile · PlayedGame · FavoriteGame · LibraryPage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="500" y="420" width="300" height="100" as="geometry"/></mxCell>
+<mxCell id="d_rules" value="age_ratings.py — AgePolicy (ESRB/PEGI → возраст)
+exceptions.py — 21 тип ошибки с user_message
+interfaces.py — GamesProvider, IpLocationProvider,
+ProfileRepository, LibraryRepository (ABC)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="830" y="420" width="210" height="100" as="geometry"/></mxCell>
+<mxCell id="d_note" value="Домен зависит только от своих интерфейсов (инверсия зависимостей):
+замена RAWG, сервиса геолокации или базы данных не затрагивает бизнес-логику." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="70" y="550" width="960" height="60" as="geometry"/></mxCell>
+<mxCell id="li" value="INFRASTRUCTURE — «как данные приходят и хранятся»" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=14;fillColor=none;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1"><mxGeometry x="40" y="720" width="1020" height="260" as="geometry"/></mxCell>
+<mxCell id="i_http" value="api/http_client.py
+JsonHttpClient: requests, таймаут,
+коды ответа, JSON, allow_404" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="70" y="760" width="240" height="90" as="geometry"/></mxCell>
+<mxCell id="i_rawg" value="api/rawg_client.py — RawgClient
+/genres · /platforms/lists/parents
+/games · /games/{id}
+/franchises · /franchises/{id}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="340" y="760" width="240" height="90" as="geometry"/></mxCell>
+<mxCell id="i_ip" value="api/ip_location_client.py
+IpLocationClient: ipapi.co,
+запасной формат ipwho.is" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="610" y="760" width="200" height="90" as="geometry"/></mxCell>
+<mxCell id="i_db" value="db/ — Database, models.py,
+repositories.py: SQLAlchemy 2.0,
+session_scope (commit/rollback),
+SqlProfileRepository, SqlLibraryRepository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="840" y="760" width="200" height="90" as="geometry"/></mxCell>
+<mxCell id="i_ext1" value="RAWG Video Games Database
+https://api.rawg.io/api (key)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="340" y="880" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="i_ext2" value="ipapi.co / ipwho.is" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="610" y="880" width="200" height="60" as="geometry"/></mxCell>
+<mxCell id="i_ext3" value="PostgreSQL
+(SQLite — для тестов)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="840" y="880" width="200" height="60" as="geometry"/></mxCell>
+<mxCell id="i_ext4" value="Telegram Bot API
+через pyTelegramBotAPI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1"><mxGeometry x="70" y="880" width="240" height="60" as="geometry"/></mxCell>
+<mxCell id="lc" value="Сквозные модули: config.py (Settings.from_env — все ключи из окружения) и app.py (Application — композиционный корень, configure_logging, main). Точка входа: run.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="40" y="1010" width="1020" height="60" as="geometry"/></mxCell>
+<mxCell id="a1" value="вызывает экран" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="p_handlers" target="p_screens"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a2" value="использует сервисы" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="p_screens" target="d_services"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a3" value="создаёт и читает" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="d_services" target="d_entities"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a4" value="через GamesProvider" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="d_services" target="i_rawg"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a5" value="через IpLocationProvider" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="d_services" target="i_ip"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a6" value="через ProfileRepository /
+LibraryRepository" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="d_services" target="i_db"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="i_http" target="i_rawg"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a8" value="HTTP GET" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="i_rawg" target="i_ext1"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a9" value="HTTP GET" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="i_ip" target="i_ext2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a10" value="SQL через ORM" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="i_db" target="i_ext3"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="a11" value="send_message / send_photo /
+answer_callback_query" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="p_support" target="i_ext4"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

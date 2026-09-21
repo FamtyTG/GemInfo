@@ -1,0 +1,102 @@
+<mxfile host="app.diagrams.net" agent="GameHunter" version="24.7.8" type="device">
+  <diagram id="screens-flow" name="screens-flow">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1140" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+<mxCell id="s1" value="Экран 1. Приветствие
+кнопка «Старт»" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="60" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s2" value="Экран 2. Главное меню
+Подобрать игру · Игры по франшизе
+Моя анкета · Во что я играл · Избранное" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="170" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s3" value="Экран 3. Выбор интересов
+(жанры, до 12)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="400" y="60" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s4" value="Экран 4. Подборка игр
+(страница, фильтры,
+сыгранные исключены)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="400" y="170" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s5" value="Экран 5. Карточка игры
+(обложка, рейтинг, возрастной
+рейтинг, описание)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="400" y="290" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s6" value="Экран 6. Ввод названия
+франшизы (IP) — текст" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="740" y="60" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s7" value="Экран 7. Найденные
+франшизы" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="740" y="170" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s8" value="Экран 8. Игры франшизы" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="740" y="290" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s9" value="Экран 9. Моя анкета
+возраст · интересы · платформы
+регион · игр пройдено" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="430" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s9a" value="Экран 9а. Ввод возраста
+(3…120) — текст" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="570" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s9b" value="Экран 9б. Интересы
+в анкете" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="690" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s9c" value="Экран 9в. Платформы
+в анкете" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="810" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s9d" value="Экран 9г. Ввод IP-адреса
+(регион) — текст" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="930" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s10" value="Экран 10. Во что я играл
+(список, пагинация)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="400" y="430" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s11" value="Экран 11. Информация
+об игре и отзыв" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="400" y="570" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s11a" value="Экран 11а. Ввод отзыва
+(до 1000 символов) — текст" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="400" y="690" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="s12" value="Экран 12. Избранное
+(список, пагинация)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="400" y="810" width="260" height="90" as="geometry"/></mxCell>
+<mxCell id="e1" value="Старт" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s1" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e2" value="Подобрать игру" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s2" target="s3"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e3" value="отметить жанр (g:{slug})" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s3" target="s3"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e4" value="Показать подборку / Показать всё" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s3" target="s4"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e5" value="Выбрать игру N (game:{id})" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s4" target="s5"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e6" value="Назад / Вперёд (games:{page})" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s4" target="s4"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e7" value="Другие жанры" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s4" target="s3"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e8" value="Назад (back_games)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s5" target="s4"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e9" value="Уже играл (played:{id}) ·
+В избранное (fav:{id})" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s5" target="s5"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e10" value="Игры по франшизе" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s2" target="s6"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e11" value="название отправлено" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s6" target="s7"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e12" value="не найдена / пусто —
+повторный ввод" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s6" target="s6"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e13" value="Выбрать франшизу N (frs:{index})" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s7" target="s8"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e14" value="Выбрать игру N" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s8" target="s5"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e15" value="Другая франшиза" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s8" target="s6"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e16" value="Назад (из франшизы)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s5" target="s8"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e17" value="Моя анкета" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s2" target="s9"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e18" value="Указать возраст (p_age)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s9" target="s9a"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e19" value="возраст сохранён" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s9a" target="s9"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e20" value="Выбрать интересы (p_genres)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s9" target="s9b"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e21" value="Сохранить (p_genres_done)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s9b" target="s9"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e22" value="Выбрать платформы (p_platforms)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s9" target="s9c"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e23" value="Сохранить (p_platforms_done)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s9c" target="s9"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e24" value="Определить регион по IP (p_ip)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s9" target="s9d"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e25" value="регион определён" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s9d" target="s9"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e26" value="адрес некорректный /
+локальный — повторный ввод" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s9d" target="s9d"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e27" value="Во что я играл" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s2" target="s10"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e28" value="Назад / Вперёд (lib:{page})" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s10" target="s10"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e29" value="Выбрать игру N (rec:{id})" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s10" target="s11"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e30" value="Написать отзыв (rev:{id})" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s11" target="s11a"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e31" value="отзыв сохранён" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s11a" target="s11"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e32" value="длиннее 1000 символов /
+пусто — повторный ввод" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s11a" target="s11a"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e33" value="Удалить из списка (del:{id}) ·
+Назад" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s11" target="s10"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e34" value="Избранное" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s2" target="s12"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e35" value="Назад / Вперёд (favs:{page})" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s12" target="s12"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e36" value="Выбрать игру N" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s12" target="s5"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e37" value="Назад (из избранного)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="s5" target="s12"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s3" value="В главное меню" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s3" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s4" value="В главное меню" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s4" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s5" value="В главное меню" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s5" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s6" value="Отмена" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s6" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s7" value="Отмена" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s7" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s8" value="В главное меню" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s8" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s9" value="В главное меню" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s9" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s10" value="В главное меню" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s10" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s11" value="В главное меню" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s11" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_s12" value="В главное меню" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s12" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="m_start" value="/start — возврат в меню из любого экрана" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;dashed=1;" edge="1" parent="1" source="s2" target="s2"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="legend" value="Жёлтым показаны экраны ввода текста (обычная клавиатура скрыта, бот ждёт сообщение).
+Пунктирные линии — возврат в главное меню. Состояние диалога хранится в StateStorage (UserContext)." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=12;fontStyle=2;" vertex="1" parent="1"><mxGeometry x="40" y="1060" width="900" height="60" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

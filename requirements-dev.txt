@@ -1,0 +1,11 @@
+# Зависимости для разработки и тестов
+# Установка: pip install -r requirements.txt -r requirements-dev.txt
+
+-r requirements.txt
+
+pytest>=8.0
+
+# генерация анимированных карточек для After Effects (make ae-assets)
+Pillow>=10.0
+imageio>=2.31
+imageio-ffmpeg>=0.4.9

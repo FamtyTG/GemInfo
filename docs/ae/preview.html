@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GameHunter — обучающие карточки 16:9, 60 fps</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 40px 20px 64px; background: #EDF1F7; color: #16202E;
+         font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 30px; margin: 0 0 8px; }
+  .lead { margin: 0 0 32px; color: #4A5568; font-size: 16px; line-height: 1.55; }
+  section { background: #fff; border-radius: 18px; padding: 20px 20px 24px;
+             box-shadow: 0 10px 30px rgba(20, 30, 50, .10); margin-bottom: 28px; }
+  section img, section video { width: 100%; height: auto; border-radius: 12px;
+                                 display: block; background: #EDF1F7; }
+  h2 { font-size: 22px; margin: 18px 0 6px; }
+  p { margin: 0 0 10px; color: #4A5568; font-size: 15px; line-height: 1.55; }
+  ol { margin: 0 0 12px; padding-left: 22px; color: #4A5568; font-size: 15px;
+        line-height: 1.6; }
+  code { background: #F1F4F9; border-radius: 6px; padding: 1px 6px; font-size: 13px; }
+  .meta { font-size: 13px; color: #7A8699; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Обучающие карточки GameHunter — 16:9, 60 fps</h1>
+  <p class="lead">
+    Слева — «телефон» с настоящим интерфейсом бота, справа — шаги обучения,
+    в момент нажатия кнопка подсвечивается кольцом. Эти же ролики (MP4, H.264)
+    бот отправляет прямо на экранах: после /start, при выборе жанра и при
+    показе подборки. Слои для After Effects —
+    <code>docs/ae/layers/</code>, раскадровка — <code>docs/ae/timeline.json</code>.
+  </p>
+  <section>
+    <video src="../../gamehunter/assets/tutorial/01_start.mp4" controls autoplay muted loop playsinline aria-label="Приветствие — обучающая карточка GameHunter"></video>
+    <h2>1. Приветствие</h2>
+    <p>Первое сообщение бота после /start: коротко о том, что он умеет, и кнопка «Старт».</p>
+    <ol>
+      <li>Откройте бота и отправьте команду /start — бот поздоровается.</li>
+      <li>Сообщение приходит «пузырём», как в настоящем мессенджере.</li>
+      <li>Нажмите кнопку «Старт» — она переведёт Вас в главное меню.</li>
+    </ol>
+    <p class="meta">Экран 1. Приветствие · 1920×1080 · 60 fps · 6.0 с · MP4 0.72 МБ ·
+    <code>../../gamehunter/assets/tutorial/01_start.mp4</code></p>
+  </section>
+  <section>
+    <video src="../../gamehunter/assets/tutorial/03_picking_genres.mp4" controls autoplay muted loop playsinline aria-label="Выбор жанра — обучающая карточка GameHunter"></video>
+    <h2>2. Выбор жанра</h2>
+    <p>Бот предлагает жанры; отметка ✔ появляется сразу после нажатия, а текст сообщения обновляется.</p>
+    <ol>
+      <li>В главном меню нажмите «Подобрать игру» — бот предложит жанры.</li>
+      <li>Нажимайте на жанры: отметка ✔ появляется сразу, сообщение обновляется.</li>
+      <li>Когда выбор готов, нажмите «Показать подборку».</li>
+    </ol>
+    <p class="meta">Экран 3. Выбор интересов · 1920×1080 · 60 fps · 7.5 с · MP4 1.02 МБ ·
+    <code>../../gamehunter/assets/tutorial/03_picking_genres.mp4</code></p>
+  </section>
+  <section>
+    <video src="../../gamehunter/assets/tutorial/04_game_list.mp4" controls autoplay muted loop playsinline aria-label="Выбор игры — обучающая карточка GameHunter"></video>
+    <h2>3. Выбор игры</h2>
+    <p>Подборка игр по анкете: сыгранные исключены, нажатие на строку открывает карточку игры с обложкой.</p>
+    <ol>
+      <li>Бот показывает игры по Вашей анкете: жанры, платформы, возраст.</li>
+      <li>Игры, в которые Вы уже играли, исключены из подборки автоматически.</li>
+      <li>Нажмите на строку игры — откроется карточка с обложкой и отзывами.</li>
+    </ol>
+    <p class="meta">Экран 4. Подборка игр · 1920×1080 · 60 fps · 7.5 с · MP4 0.71 МБ ·
+    <code>../../gamehunter/assets/tutorial/04_game_list.mp4</code></p>
+  </section>
+</div>
+</body>
+</html>
